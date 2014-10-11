@@ -17,6 +17,6 @@ I spend my free time learning about things that I think will help me to make the
   <img class="about-img" src="/public/images/me.jpg" alt="Me with a lamb"/>  
 </div>
 <div class="about-col">
-  <p>My dog Uzume.</p>
+  <p>My dog, Uzume.</p>
   <img class="about-img" src="/public/images/uzume.jpg" alt="Uzume"/>
 </div>
