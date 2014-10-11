@@ -28,7 +28,7 @@ function gameRound(solution){
     } else if($('input[name=answer]').val() === "YOMOMMA") {
       $('#string').html("YOU WIN. CONGRATULATIONS")
       $('input[name=answer]').val("")
-      $('body').css('background-color', '#FF80FD')
+      $('body').css('background-color', '#E339E0')
     } else {
       $('#string').html("WRONG, YOU LOSE")
     }
