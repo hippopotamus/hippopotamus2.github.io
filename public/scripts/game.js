@@ -25,6 +25,8 @@ function gameRound(solution){
     if($('input[name=answer]').val().toUpperCase() === solution.join("")){
       $('input[name=answer]').val("")
       gameRound(solution)
+    } else if($('input[name=answer]').val() === "YOMOMMA") {
+      $('#string').html("YOU WIN. CONGRATULATIONS")
     }
     else {
       $('#string').html("WRONG, YOU LOSE")
