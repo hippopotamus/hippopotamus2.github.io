@@ -10,7 +10,7 @@ I spend my free time learning about things that I think will help me to make the
 
 <div class="about-col">
   <p>Me in black & white.</p>
-  <img class="about-img" src="/public/images/armen.jpeg" alt="Me"/>
+  <img class="about-img" src="/public/images/armen.jpg" alt="Me"/>
 </div>
 <div class="about-col">
   <p>Me with a baby lamb.</p>
