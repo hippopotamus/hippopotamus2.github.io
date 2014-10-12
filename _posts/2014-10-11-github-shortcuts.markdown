@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Git Aliases
-date: 2014-10-15
+date: 2014-10-11
 ---
 
 Git is amazing, but the commands are too long. Aliases fix this. If you've done [Git Immersion](http://gitimmersion.com/), you'll recognize a lot of the aliases here. If you don't now what aliases are, this tutorial is for you. If you have been too lazy to add them to your config files, I'm lazier--that's why I alias as much as I can. Less typing = happier me.  
