@@ -1,0 +1,19 @@
+---
+layout: post
+title: New Font and Postgres
+date: 2014-12-29
+---
+
+## Making Terminal Cuter
+
+I was playing around with Postgres a while ago and found some cool things.  
+One of which is a new font that I like more than Menlo.  
+If you're not into fonts, that's cool. I stare at mine all day, so I get kind of excited when I find something that's nicer to look at.  
+The font is [Inconsolata](http://www.google.com/fonts/specimen/Inconsolata).
+
+There are important characteristics to a font, like having a discernable difference between a back-tick and quotation mark. Inconsolata hits all of the bases of a good monospaced font, and has made coding more enjoyable for me. I find small things like font to be very important to consciously decide on. These minor details make up my workflow, and, if I don't have a good workflow, I'm not able to think as creatively while working.
+
+Anyways, the reason I came upon this was because I was tinkering with my vim settings for playing in Postgres. Any Rails beginners out there, check out the [Postgres documentation](http://www.postgresql.org/docs/). It's sick what you can do with Postgres. Seeing the power should make you appreciate, and optimize how you use, Active Record a little more.
+The PostgresSQL documentation is really good and there are some cool tutorials online, if you find it interesting.
+
+I do want to put up a blurb on using tmux/vim while playing around with your database in terminal. Hopefully, I'll get around to that with some screenshots sometime soon.
