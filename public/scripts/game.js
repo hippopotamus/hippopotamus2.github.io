@@ -18,6 +18,7 @@ function Game() {
       $('#string').html("")
     }, 1000)
   },
+
   this.gameRound = function(){
     var that = this
     this.addLetterToArray(this.solutionArray)
@@ -38,6 +39,7 @@ function Game() {
       }
     }, 3000)
   },
+  
   this.startGame = function() {
     var that = this
     $('#answer').on('submit', function(e){
