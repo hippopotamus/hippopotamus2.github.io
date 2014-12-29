@@ -3,9 +3,9 @@ title: armen
 email: vartan.armen@gmail.com
 description: Amateur Learner
 baseurl: "" # the subpath of your site, e.g. /blog/
-url: "armenvartan.github.io" # the base hostname & protocol for your site
-twitter_username: armenvartan1
-github_username:  armenvartan
+url: "hippopotamus2.github.io" # the base hostname & protocol for your site
+twitter_username: YammibalLecter
+github_username:  hippopotamus2
 
 # Build settings
 markdown: kramdown

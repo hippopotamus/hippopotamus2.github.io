@@ -1,45 +1,50 @@
 $(document).ready(function(){
   $('input[type=submit]').hide()
-  startGame()
+  var game = new Game()
+  game.startGame()
 })
 
-var solutionArray = []
-var letters = "QWERTYUIOPASDFGHJKLZXCVBNM"
+function Game() {
+  this.solutionArray = [],
+  this.letters = "QWERTYUIOPASDFGHJKLZXCVBNM",
 
-function addLetterToArray(arr){
-  arr.push(letters[Math.floor(Math.random()*26)])
-}
+  this.addLetterToArray = function() {
+    this.solutionArray.push(this.letters[Math.floor(Math.random()*26)])
+  },
 
-function concatShowThenHideSolution(arr){
-  $('#string').html(arr.join(""))
-  setTimeout(function(){
-    $('#string').html("")
-  }, 1000)
-}
+  this.concatShowThenHideSolution = function() {
+    $('#string').html(this.solutionArray.join(""))
+    setTimeout(function(){
+      $('#string').html("")
+    }, 1000)
+  },
+  this.gameRound = function(){
+    var that = this
+    this.addLetterToArray(this.solutionArray)
+    this.concatShowThenHideSolution(this.solutionArray)
 
-function gameRound(solution){
-  addLetterToArray(solution)
-  concatShowThenHideSolution(solution)
-
-  setTimeout(function(){
-    if($('input[name=answer]').val().toUpperCase() === solution.join("")){
+    setTimeout(function(){
+      if($('input[name=answer]').val().toUpperCase() === that.solutionArray.join("")){
+        $('input[name=answer]').val("")
+        return that.gameRound()
+      } else if($('input[name=answer]').val() === "YOMOMMA") {
+        $('#string').html("YOU WIN. CONGRATULATIONS")
+        $('input[name=answer]').val("")
+        $('body').css('background-color', '#E339E0')
+      } else {
+        $('#string').html("WRONG, YOU LOSE")
+        $('input[type=submit]').prop("disabled", false)
+        that.solutionArray = []
+      }
+    }, 3000)
+  },
+  this.startGame = function() {
+    var that = this
+    $('#answer').on('submit', function(e){
+      e.preventDefault()
+      $('input[type=submit]').prop("disabled", true)
       $('input[name=answer]').val("")
-      gameRound(solution)
-    } else if($('input[name=answer]').val() === "YOMOMMA") {
-      $('#string').html("YOU WIN. CONGRATULATIONS")
-      $('input[name=answer]').val("")
-      $('body').css('background-color', '#E339E0')
-    } else {
-      $('#string').html("WRONG, YOU LOSE")
-    }
-  }, 3000)
-}
-
-function startGame(){
-  $('#answer').on('submit', function(e){
-    e.preventDefault()
-    $('input[type=submit]').prop( "disabled", true )
-    $('input[name=answer]').val("")
-    gameRound(solutionArray)
-  })
+      that.gameRound()
+    })
+  }
 }
