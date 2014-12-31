@@ -1,0 +1,33 @@
+---
+layout: post
+title: The Pseudocode Programming Process
+date: 2014-12-31
+---
+
+I've picked up [Code Complete](http://www.amazon.com/Code-Complete-Practical-Handbook-Construction/dp/0735619670) again, and am finally working through the rest of it. This book is bad ass. I haven't read anything in it yet that hasn't been pure gold. I want to write about PPP, because I was arguing with a friend about why I think TDD is a bad way to solve problems. I think there are strong arguments in Code Complete for PPP. I'll start with a quick overview of it, then go into why I think TDD is bad for work flow, and then rant about something in between.  
+I'm going to keep this as short as possible. My goal isn't to write how to do it, but, rather, why I like thinking about software this way.
+
+#### What is PPP?
+
+The idea behind the Pseudocode Programming Process is that you design the code before writing it. It's an iterative process, where you take the basic abstraction of what you're trying to solve, and design your classes and routines to match the it.  
+You start with something very high level, like "This routine graph a user's answers in comparison to all of the other users answers in the survey".  
+Once you have the high level goal of the class, you then look to see all of the routines you would need to make this happen. Once you have the routines laid out, you look back at your pseudocode to see if the design makes sense for the problem. After enough tweaking to make sure your pseudocode is designed properly for the problem, you start to code it out.  
+In the example above, after going through the pseudocode, I may find that I'm coupling the graphing of the data with saving the user's answers. So I separate out the logic of saving to the database from the graphing. This, of course, makes my code more easily testable and reusable.  
+With decent code laid out, writing tests for consistent interfaces, etc will be much easier and faster.
+
+One thing I love about this method is that you are never married to your code. You've put very little investment into a particular solution, so it will be easier to drop the idea for a better one. Also, I'm spending more time thinking, rather than blindly doing.
+
+#### Why I dislike TDD
+
+I think writing tests first is not a natural way to think about problems. It also marries you to your code. If I think I have a way to code something, I've written a bunch of tests, and have a decent amount of code already, it's very unlikely that I'm going to drop all of the work I've done for a cleaner solution that just came to me.  
+I've come up with all of my favorite solutions while I'm in the middle of wrestling with the problem. What I don't want is to have a large code and time investment into a solution that I know is not going to be as beautiful as what I'll come up with after working through the problem.  
+Another huge problem I have with TDD is that it creates a lot of unnecessary tests. This means more hours billed and more tests that break when things change.  
+This may be more personal to me, but when I start coding something, I have no idea what I'm doing. I need to play with things to get context before writing anything worthwhile. If I write tests in this stage of the process, they're not going to be good tests. Having tests doesn't mean much, if the tests are shit.
+
+#### Yo
+
+Writing tests for your code is obviously a good thing. In my opinion, things like TDD try to make the tail wag the dog. I think a lot of problems could be side stepped by taking more time to design the code before investing into it. Most major bugs that I've seen stem from a poorly designed solution. If the approach to the problem was much cleaner, the poorly written methods that step on each others toes wouldn't exist in the first place. So often there is a much simpler, easier to understand solution. Investing into tests before having a decent solution makes thinking creatively more difficult. [Rich Hickey has a great talk on design first](https://www.youtube.com/watch?v=f84n5oFoZBc).  
+My understanding of good tests is that they prove the interfaces are reliable and show the intent of the code. Writing them in a TDD style gives you a lot of tests that reflect the process it took to get there, rather than the final intent. It also does not give any emphasis on testing interfaces, but rather implementations. Honestly, I don't care about your implementation, if I can trust the interface (refactoring is a whole other subject).  
+A small note, the need for tests is not always the same. For example, the amount of tests you want for a rocket launching and a website for your friend are not the same.
+
+I also think that PPP encourages abstract thought; in my opinion, the most undervalued part of any process.
