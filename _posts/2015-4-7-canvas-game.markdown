@@ -4,7 +4,8 @@ title: HTML5 Canvas
 date: 2015-04-07
 ---
 
-I was reading about HTML5 canvas. Seems pretty cool. I followed one of the tutorials and made a shitty little game. I added a little bit of functionality to it. Hopefully I'll get some more time to play with it. This was fun.
+I was reading about HTML5 canvas. Seems pretty cool. I followed one of the tutorials and made a shitty little game. I added a little bit of functionality to it. Hopefully I'll get some more time to play with it. This was fun.  
+Click on the game window to freeze/unfreeze scrolling.
 <style>
   #canvas {
     display: block;
@@ -14,6 +15,9 @@ I was reading about HTML5 canvas. Seems pretty cool. I followed one of the tutor
     bottom: 0;
     right: 0;
     left: 0;
+  }
+  .noscroll {
+    overflow: hidden;
   }
 </style>
 <canvas id="canvas" width="512" height="480"></canvas>
@@ -38,6 +42,11 @@ var monster = {
 var monstersCaught = 0
 
 $(document).ready(function() {
+  $('#canvas').on('click', function() {
+    console.log('yo')
+    $('body').toggleClass('noscroll')
+  })
+
   bgImage = new Image()
   bgImage.src = "/public/images/canvas-game/background.png"
   hero.image.src = "/public/images/canvas-game/hero.png"
