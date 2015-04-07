@@ -4,7 +4,7 @@ title: HTML5 Canvas
 date: 2015-04-07
 ---
 
-I was reading about HTML5 canvas. Seems pretty cool. I followed one of the tutorials and made a shitty little game. I added a little bit of functionality to it. Hopefully I'll get some more time to play with it. This was fun.  
+I was reading about HTML5 canvas. Seems pretty cool. I followed one of [the tutorials](http://www.lostdecadegames.com/how-to-make-a-simple-html5-canvas-game/) and made a shitty little game. I added a little bit of functionality to it. Hopefully I'll get some more time to play with and add to it. This was fun. It's kind of crazy what you can do with JS now. We've come a long way from the early Netscape days.  
 Click on the game window to freeze/unfreeze scrolling.
 <style>
   #canvas {
