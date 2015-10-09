@@ -13,13 +13,13 @@ Let's imagine we have a dispatcher. And the dispatcher will route them to the pr
 def send_sms(data):
     sent = sms_api.send_text(data['to'], data['text'])
     if send.status == 200:
-        return {"success": True, "message": "SMS sent"}
+        return {"success": "true", "message": "SMS sent"}
     else:
-        return {"success": False, "message": "SMS Failed"}
+        return {"success": "false", "message": "SMS Failed"}
 
 def send_letter(data):
     notify_mail_room(data['to'], data['text'], data['deliver_by'])
-    return {"success": True, "message": "Feel free to save paper and only receive emails"}
+    return {"success": "true", "message": "Feel free to save paper and only receive emails"}
 
 # etc
 
@@ -34,7 +34,7 @@ def dispatch(message):
     Takes the method that maps to the dispatcher type and calls it with the JSON data as a parameter
     '''
     method = dispatcher.get([message['type']])
-    return method(message['data']) if method else {"success": False, "message": "Method not found"}
+    return method(message['data']) if method else {"success": "false", "message": "Method not found"}
 {% endhighlight %}
 If I call `dispatch({"type": "sms", "data": {"to": "12314", "text": "don't forget your umbrella"}})`, it will route to send_sms.  
 If I call `dispatch({"type": "snail_mail", "data": {"to": "12314", "text": "pay your bill", "deliver_by": "Next Friday"}})`, it will route to send_letter.
