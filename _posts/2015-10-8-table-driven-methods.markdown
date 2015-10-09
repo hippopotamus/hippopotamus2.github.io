@@ -8,7 +8,7 @@ I've had a few situations at work that table driven methods were a really great 
 I've been doing mostly Python the last week, which has been really fun. If you haven't played with Python, you're missing out (you'll get used to the whole white space and no closures thing).  
 
 Let's imagine we have a dispatcher. And the dispatcher will route them to the proper routines.  
-```py
+{% highlight python %}
 # app.py
 def send_sms(data):
     sent = sms_api.send_text(data['to'], data['text'])
@@ -35,8 +35,7 @@ def dispatch(message):
     '''
     method = dispatcher.get([message['type']])
     return method(message['data']) if method else {"success": False, "message": "Method not found"}
-```
-
+{% endhighlight %}
 If I call `dispatch({"type": "sms", "data": {"to": "12314", "text": "don't forget your umbrella"}})`, it will route to send_sms.  
 If I call `dispatch({"type": "snail_mail", "data": {"to": "12314", "text": "pay your bill", "deliver_by": "Next Friday"}})`, it will route to send_letter.
 
