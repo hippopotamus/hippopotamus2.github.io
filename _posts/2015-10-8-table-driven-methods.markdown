@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Table Driven Methods
-date: 2015-04-07
+date: 2015-10-08
 ---
 
 I've had a few situations at work that table driven methods were a really great fit for. It's a really great pattern for situations where you have a lot of branching but one line of logic.  
