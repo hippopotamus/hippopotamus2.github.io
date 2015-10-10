@@ -1,0 +1,42 @@
+---
+layout: post
+title: Type Tags
+date: 2015-10-10
+---
+
+Type tags are a cool pattern for when you have multiple data sources, but want to deal with them in a consistent way. I've used this in my front end code a few times. It nicely abstracting away what's going on the backend from the user. Here is a simple example:  
+
+Imagine we have both movies and tv shows in our db. We store them in different tables, but when a user should have one search box to search both. I'll be using a js/pseudocode hybrid for the example.  
+{% highlight javascript %}
+var search = function (query) {
+/*
+let's imagine your backend developer is really nice and wrote you a search route
+that hits both tables
+*/
+  var results = []
+  $.get('/search?' + query, function (response) {
+    results.push(_.map(response.data.movies, function (movie) {
+      return {
+        type: 'movies',
+        id: movie.id,
+        title: movie.title
+      }
+    }))
+    results.push(_.map(response.data.shows, function (show) {
+      return {
+        type: 'shows',
+        id: show.id,
+        title: show.title
+      }
+    }))
+    return _.flatten(results)
+  })
+}
+
+var selectSearchItem = function (item) {
+  $.get(item.type + '/' + item.id, function (response) {
+    // go to the movie or tv show page
+  })
+}
+{% endhighlight %}
+With this you can display just the titles, and you have the necessary information to do what you need to do afterwards
