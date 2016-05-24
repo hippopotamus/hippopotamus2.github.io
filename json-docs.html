@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+<link href='https://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<style>
+body {
+    font-family: 'Inconsolata', sans-serif;
+    font-size: 16px;
+}
+ul {
+    width: 300px;
+    margin: 20px;
+}
+code {
+    color: #FFF;
+    background-color: #042A48;
+}
+.table-static {
+    margin-bottom:10px;
+}
+thead th {
+    color: #FFF;
+    background-color: #01213A;
+}
+th {
+    background-color: #91A0AC;
+}
+td {
+    background-color: #C3C6C8;
+}
+.nav-sidebar {
+    position: fixed;
+    height: 100%;
+    padding-bottom: 40px;
+    border-right: 1px solid #ddd;
+    overflow: auto;
+    overflow-x: hidden;
+}
+.side-nav.nav > li.nav-header > a {
+    cursor: default;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.side-nav > ul.nav > li > a:hover {
+    width: 250px;
+}
+ul.nav.nav-tabs.nav-justified {
+    margin-left: 0px;
+}
+.json-markup {
+    padding: 1em 2em;
+	white-space: pre;
+    color: #C3C6C8;
+    background-color: #042A48;
+}
+.json-markup-key {
+	font-weight: bold;
+}
+.json-markup-bool {
+    color: #A8573D;
+}
+.json-markup-string {
+    color: #AA8C3D;
+}
+.json-markup-null {
+	color: #CFCFCF;
+}
+.json-markup-number {
+	color: #92B076;
+}
+</style>
+
+<div ng-cloak ng-app="app">
+    <div class="container-fluid" ng-cloak ng-controller="controller">
+        <div class="row">
+            <nav class="col-sm-3 col-md-2 nav-sidebar">
+                <div class="container">
+                    <ul class="side-nav nav nav-pills nav-stacked">
+                        <li class="nav-header"><a href="#top">Top of Page</a></li>
+                    </ul>
+                    <span ng-repeat="item in sidebarItems">
+                        <ul class="side-nav nav nav-pills nav-stacked">
+                            <li class="nav-header">{{item.name}}</li>
+                            <li ng-repeat="subResource in item.subResources">
+                                <a href="#{{subResource.method}}{{subResource.id}}">{{subResource.name}}</a>
+                            </li>
+                        </ul>
+                    </span>
+                </div>
+            </nav>
+        </div>
+        <div class="row">
+            <div id="/top" class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2">
+                <br>
+                <h1>My Super Awesome Docs</h1>
+                <br>
+                <div class="row" ng-repeat="resource in resources track by $index">
+                    <div class="col-xs-12">
+                        <h2>{{resource.resource}}</h2>
+                        <h4 ng-if="resource.description">{{resource.description}}</h4>
+                        <div ng-repeat="item in resource" ng-if="item.properties">
+                            <hr id="/{{item.method}}{{item.id}}">
+
+                            <h4>{{item.name}}</h4>
+                            <p><strong>{{item.method}}<strong> <code>{{item.id}}</code></p>
+
+                            <span ng-if="item.header" ng-init="item=item.header">
+                                <br>
+                                <h4>Header</h4>
+                                <span ng-include src="'table.tpl'"></span>
+                            </span>
+                            <br>
+                            <h4>Parameters</h4>
+                            <span ng-include src="'table.tpl'"></span>
+
+                            <span ng-if="item.response" ng-init="item=item.response">
+                                <br>
+                                <h4>Response Success Format</h4>
+                                <span ng-include src="'table.tpl'"></span>
+
+                                <div ng-if="item.examples" class="row">
+                                    <div class="col-xs-12">
+                                        <h4>Examples</h4>
+                                        <uib-tabset justified="true">
+                                            <uib-tab ng-repeat="example in item.examples" heading=" {{example.status.type}} : {{example.status.code}}">
+                                                <div ng-bind-html="htmlifyJSON(example.properties)"></div>
+                                            </uib-tab>
+                                        </uib-tabset>
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                        <hr>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/ng-template" id="table.tpl">
+        <table ng-if="item.type === 'object'" class="table table-bordered table-static">
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Meta</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tr ng-repeat="(prop, spec) in item.properties">
+                <th>{{prop}} <span ng-if="spec.required" class="small">(required)</span></th>
+                <td ng-bind-html="formatType(spec)"></td>
+                <td><span ng-include src="'meta.tpl'"></span></td>
+                <td>{{spec.description}}</td>
+            </tr>
+        </table>
+
+        <table ng-if="item.type !== 'object'" class="table table-bordered table-static">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Meta</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tr>
+                <td ng-bind-html="formatType(item)"></td>
+                <td ng-bind-html="formatNonObjSpecMeta(item)"></td>
+                <td>{{item.description}}</td>
+            </tr>
+        </table>
+    </script>
+
+    <script type="text/ng-template" id="meta.tpl">
+        <span ng-if="spec.type === 'array'">
+            <p ng-bind-html="formatSpecMeta(spec)"></p>
+            <p>Allowed Formats</p>
+            <span ng-repeat="item in spec.items" ng-include src="'table.tpl'"></span>
+        </span>
+        <span ng-if="spec.type === 'object'" ng-include src="'table.tpl'"></span>
+        <span ng-if="spec.type !== 'array' && spec.type !== 'object'" ng-bind-html="formatSpecMeta(spec)"></span>
+    </script>
+</div>
+<br>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.3/angular.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.3/angular-sanitize.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.9.0/lodash.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/1.3.1/ui-bootstrap.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/1.3.2/ui-bootstrap-tpls.min.js"></script>
+<script>
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var jsonMarkup = require('json-markup')
+var JsonPointer = require('json-ptr')
+
+angular.module('app', ['ui.bootstrap', 'ngSanitize']).config(function($httpProvider){
+    $httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
+}).controller('controller', function($scope, $http, $timeout){
+    $http.get('https://hook.io/hippopotamus2/json-docs-example').then(function(res){
+        $scope.schema = mapJSON(res.data)
+    })
+
+    function mapJSON(schema) {
+        /* i could optimize this pretty easily. if it eats your browser, let me know, and i'll make it better... if you're reading this, you could probably do it too.
+        i will happily do it for someone who found this useful. */
+        replaceRefs(schema)
+
+        $scope.resources = []
+        buildFlatResourcesList(schema)
+        $scope.sidebarItems = buildSidebar($scope.resources)
+        _.map($scope.resources, function (resource) {
+            mapRequiredOntoProperties(resource)
+        })
+    }
+
+    function replaceRefs (schema) {
+        /* This crawls the JSON schema for all $refs, and replaces them with the schema they're referencing */
+        /* Maybe I'm misunderstanding JSON pointers. I was hoping I there was some magic JSON ptr api fn that replaces all $refs with the obj they reference */
+        var ptr = JsonPointer.noConflict()
+        _.forEach(_.keys(ptr.flatten(schema)), function (item) {
+             var pathList = ptr.decode(item)
+             if (pathList[pathList.length-1] === '$ref') {
+                var objPath = '#/' + _.slice(pathList, 0, pathList.length-1).join('/') // building abs path to item with a $ref
+                ptr.set(schema, objPath, ptr.get(schema, ptr.get(schema, item))) // set that item to the schema referenced in it's $ref
+             }
+        })
+    }
+
+    function buildFlatResourcesList (schema) {
+        _.forEach(_.keys(schema), function (key) {
+            var item = schema[key]
+            if (_.isObject(item)) {
+                _.forEach(_.keys(item), function (k) {
+                    if (k === 'resource') {
+                        buildFlatResourcesList(item)
+                        item = _.omit(item, k)
+                    }
+                })
+            }
+            if (key === 'resource') {
+                $scope.resources.push(schema)
+            }
+        })
+    }
+
+    function buildSidebar (resources) {
+        return _.map(resources, function (item) {
+            return {
+                name: item.resource,
+                subResources: _.chain(item).keys().map(function (key) {
+                    /* mapping the name of the resource and the uri. name for the title in sidebar, id (uri) is used for bookmarking the item */
+                    return {
+                        name: item[key].name,
+                        id: item[key].id,
+                        method: item[key].method,
+                    }
+                }).filter('name').value()
+            }
+        })
+    }
+
+    function mapRequiredOntoProperties (resource) {
+        var properties = _.get(resource, 'properties')
+        var requiredProperties = _.get(resource, 'required')
+        if (properties && requiredProperties) {
+            _.forEach(requiredProperties, function (propertyName) {
+                var property = _.get(properties, propertyName)
+                if (!property) {
+                    console.log(
+                        "Property {prop} is listed as required in resource {resource}, but is not in the schema"
+                        .replace('{prop}', propertyName).replace('{resource}', _.get(resource, 'name'))
+                    )
+                } else {
+                    _.merge(property, { required: true })
+                }
+            })
+        }
+        /* if there is an object, recurse onto it */
+        _.forEach(_.keys(resource), function (key) {
+            /* if it's an object, go deeper */
+            if (_.isObject(resource[key])) {
+                mapRequiredOntoProperties(resource[key])
+            }
+            if (key === 'items' && _.isArray(resource[key])) {
+                /* items can have an array of objects, so tree recursion here :) */
+                _.forEach(resource[key], function (item) {
+                    mapRequiredOntoProperties(resource[key])
+                })
+            }
+        })
+    }
+
+    $scope.formatType = function (item) {
+        var type = _.get(item, 'type')
+        if (type) {
+            return type
+        } else if (_.get(item, 'anyOf')) {
+            return 'anyOf'
+        } else if (_.get(item, 'allOf')) {
+            return 'allOf'
+        } else {
+            return
+        }
+    }
+
+    $scope.formatSpecMeta = function (spec) {
+        var anyOf = _.get(spec, 'anyOf')
+        if (anyOf) {
+            return formatArrayMeta(anyOf)
+        }
+        var allOf = _.get(spec, 'allOf')
+        if (allOf) {
+            return formatArrayMeta(allOf)
+        }
+        if (!_.isObject(spec)) {
+            return
+        }
+
+        var omittedSpecs = _.omit(spec, ['type', 'description', '$$hashKey', 'required', 'items'])
+        if (!_.keys(omittedSpecs).length) {
+            return
+        }
+
+        return _.map(_.keys(omittedSpecs), function (key) {
+            var val = omittedSpecs[key]
+            if (_.isArray(val)) {
+                return '<strong>'+key+':</strong> '+val.join(', ')
+            } else if (key === 'pattern') {
+                return '<strong>'+key+':</strong> '+'/val/'.replace('val', val)
+            }
+            return '<strong>'+key+':</strong> '+val
+        }).join(', ')
+    }
+
+    $scope.formatNonObjSpecMeta = function (spec) {
+        var omittedSpecs = _.omit(spec, ['type', 'description', '$$hashKey', 'required', 'status'])
+        if (!_.keys(omittedSpecs).length) {
+            return
+        }
+
+        return _.map(_.keys(omittedSpecs), function (key) {
+            return '<strong>'+key+':</strong> '+omittedSpecs[key]
+        }).join(', ')
+    }
+
+    $scope.htmlifyJSON = function (obj) {
+        return jsonMarkup(obj)
+    }
+
+    function formatArrayMeta (items) {
+        return _.map(items, function (item) {
+            return '{' + _.map(_.keys(item), function (key) {
+                return '<strong>'+key+':</strong> ' + item[key]
+            }).join(', ')
+        }).join('}, ') + '}'
+    }
+})
+
+},{"json-markup":2,"json-ptr":3}],2:[function(require,module,exports){
+var INDENT = '    ';
+
+var type = function(doc) {
+	if (doc === null) return 'null';
+	if (Array.isArray(doc)) return 'array';
+	if (typeof doc === 'string' && /^https?:/.test(doc)) return 'link';
+
+	return typeof doc;
+};
+
+var escape = function(str) {
+	return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+
+module.exports = function(doc) {
+	var indent = '';
+
+	var forEach = function(list, start, end, fn) {
+		if (!list.length) return start+' '+end;
+
+		var out = start+'\n';
+
+		indent += INDENT;
+		list.forEach(function(key, i) {
+			out += indent+fn(key)+(i < list.length-1 ? ',' : '')+'\n';
+		});
+		indent = indent.slice(0, -INDENT.length);
+
+		return out + indent+end;
+	};
+
+	var visit = function(obj) {
+		if (obj === undefined) return '';
+
+		switch (type(obj)) {
+			case 'boolean':
+			return '<span class="json-markup-bool">'+obj+'</span>';
+
+			case 'number':
+			return '<span class="json-markup-number">'+obj+'</span>';
+
+			case 'null':
+			return '<span class="json-markup-null">null</span>';
+
+			case 'string':
+			return '<span class="json-markup-string">"'+escape(obj.replace(/\n/g, '\n'+indent))+'"</span>';
+
+			case 'link':
+			return '<span class="json-markup-string">"<a href="'+escape(obj)+'">'+escape(obj)+'</a>"</span>';
+
+			case 'array':
+			return forEach(obj, '[', ']', visit);
+
+			case 'object':
+			var keys = Object.keys(obj).filter(function(key) {
+				return obj[key] !== undefined;
+			});
+
+			return forEach(keys, '{', '}', function(key) {
+				return '<span class="json-markup-key">'+key + ':</span> '+visit(obj[key]);
+			});
+		}
+
+		return '';
+	};
+
+	return '<div class="json-markup">'+visit(doc)+'</div>';
+};
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+(function() {
+  var root = this; // either the module or the window (in a browser)
+  var savedJsonPointer = root.JsonPointer;
+
+  function replace(str, find, repl) {
+    // modified from http://jsperf.com/javascript-replace-all/10
+    var orig = str.toString();
+    var res = '';
+    var rem = orig;
+    var beg = 0;
+    var end = -1;
+    while ((end = rem.indexOf(find)) > -1) {
+      res += orig.substring(beg, beg + end) + repl;
+      rem = rem.substring(end + find.length, rem.length);
+      beg += end + find.length;
+    }
+    if (rem.length > 0) {
+      res += orig.substring(orig.length - rem.length, orig.length);
+    }
+    return res;
+  }
+
+  function decodeFragmentSegments(segments) {
+    var i = -1;
+    var len = segments.length;
+    var res = new Array(len);
+    while (++i < len) {
+      res[i] = replace(replace(decodeURIComponent('' + segments[i]), '~1', '/'), '~0', '~');
+    }
+    return res;
+  }
+
+  function encodeFragmentSegments(segments) {
+    var i = -1;
+    var len = segments.length;
+    var res = new Array(len);
+    while (++i < len) {
+      if (typeof segments[i] === 'string') {
+        res[i] = encodeURIComponent(replace(replace(segments[i], '~', '~0'), '/', '~1'));
+      } else {
+        res[i] = segments[i];
+      }
+    }
+    return res;
+  }
+
+  function decodePointerSegments(segments) {
+    var i = -1;
+    var len = segments.length;
+    var res = new Array(len);
+    while (++i < len) {
+      res[i] = replace(replace(segments[i], '~1', '/'), '~0', '~');
+    }
+    return res;
+  }
+
+  function encodePointerSegments(segments) {
+    var i = -1;
+    var len = segments.length;
+    var res = new Array(len);
+    while (++i < len) {
+      if (typeof segments[i] === 'string') {
+        res[i] = replace(replace(segments[i], '~', '~0'), '/', '~1');
+      } else {
+        res[i] = segments[i];
+      }
+    }
+    return res;
+  }
+
+  function decodePointer(ptr) {
+    if (typeof ptr !== 'string') {
+      throw new TypeError('Invalid type: JSON Pointers are represented as strings.');
+    }
+    if (ptr.length === 0) {
+      return [];
+    }
+    if (ptr[0] !== '/') {
+      throw new ReferenceError('Invalid JSON Pointer syntax. Non-empty pointer must begin with a solidus `/`.');
+    }
+    return decodePointerSegments(ptr.substring(1).split('/'));
+  }
+
+  function encodePointer(path) {
+    if (path && !Array.isArray(path)) {
+      throw new TypeError('Invalid type: path must be an array of segments.');
+    }
+    if (path.length === 0) {
+      return '';
+    }
+    return '/'.concat(encodePointerSegments(path).join('/'));
+  }
+
+  function decodeUriFragmentIdentifier(ptr) {
+    if (typeof ptr !== 'string') {
+      throw new TypeError('Invalid type: JSON Pointers are represented as strings.');
+    }
+    if (ptr.length === 0 || ptr[0] !== '#') {
+      throw new ReferenceError('Invalid JSON Pointer syntax; URI fragment idetifiers must begin with a hash.');
+    }
+    if (ptr.length === 1) {
+      return [];
+    }
+    if (ptr[1] !== '/') {
+      throw new ReferenceError('Invalid JSON Pointer syntax.');
+    }
+    return decodeFragmentSegments(ptr.substring(2).split('/'));
+  }
+
+  function encodeUriFragmentIdentifier(path) {
+    if (path && !Array.isArray(path)) {
+      throw new TypeError('Invalid type: path must be an array of segments.');
+    }
+    if (path.length === 0) {
+      return '#';
+    }
+    return '#/'.concat(encodeFragmentSegments(path).join('/'));
+  }
+
+  function toArrayIndexReference(arr, idx) {
+    var len = idx.length;
+    var cursor = 0;
+    if (len === 0 || len > 1 && idx[0] === '0') {
+      return -1;
+    }
+    if (len === 1 && idx[0] === '-') {
+      return arr.length;
+    }
+
+    while (++cursor < len) {
+      if (idx[cursor] < '0' || idx[cursor] > '9') {
+        return -1;
+      }
+    }
+    return parseInt(idx, 10);
+  }
+
+  function hasValueAtPath(target, path) {
+    var it;
+    var len;
+    var cursor;
+    var step;
+    var p;
+    if (typeof target !== 'undefined') {
+      it = target;
+      len = path.length;
+      cursor = -1;
+      if (len) {
+        while (++cursor < len && it) {
+          step = path[cursor];
+          if (Array.isArray(it)) {
+            if (isNaN(step) || !isFinite(step)) {
+              break;
+            }
+            p = toArrayIndexReference(it, step);
+            if (it.length > p) {
+              it = it[p];
+            } else {
+              break;
+            }
+          } else {
+            it = it[step];
+          }
+        }
+      }
+      return cursor === len && typeof it !== 'undefined';
+    }
+    return false;
+  }
+
+  function getValueAtPath(target, path) {
+    var it;
+    var len;
+    var cursor;
+    var step;
+    var p;
+    var nonexistent = undefined;
+    if (typeof target !== 'undefined') {
+      it = target;
+      len = path.length;
+      cursor = -1;
+      if (len) {
+        while (++cursor < len && it) {
+          step = path[cursor];
+          if (Array.isArray(it)) {
+            if (isNaN(step) || !isFinite(step)) {
+              return nonexistent;
+            }
+            p = toArrayIndexReference(it, step);
+            if (it.length > p) {
+              it = it[p];
+            } else {
+              return nonexistent;
+            }
+          } else {
+            it = it[step];
+          }
+        }
+      }
+      return it;
+    }
+    return nonexistent;
+  }
+
+  function compilePointerDereference(path) {
+    let body = `if (typeof(obj) !== 'undefined'`;
+    if (path.length === 0) {
+      return function(root) {
+        return root;
+      };
+    }
+    body = path.reduce((body, p, i) => {
+      return `${body} &&
+    typeof((obj = obj['${replace(path[i], '\\', '\\\\')}'])) !== 'undefined'`;
+    }, `if (typeof(obj) !== 'undefined'`);
+    body = `${body}) {
+  return obj;
+}`;
+    return new Function(['obj'], body); // eslint-disable-line no-new-func
+  }
+
+  function setValueAtPath(target, val, path, force) {
+    var it;
+    var len;
+    var end;
+    var cursor;
+    var step;
+    var p;
+    var rem;
+    var nonexistent = undefined;
+    if (path.length === 0) {
+      throw new Error('Cannot set the root object; assign it directly.');
+    }
+    if (typeof target === 'undefined') {
+      throw TypeError('Cannot set values on undefined');
+    }
+    it = target;
+    len = path.length;
+    end = path.length - 1;
+    cursor = -1;
+    if (len) {
+      while (++cursor < len) {
+        step = path[cursor];
+        if (Array.isArray(it)) {
+          p = toArrayIndexReference(it, step);
+          if (it.length > p) {
+            if (cursor === end) {
+              rem = it[p];
+              it[p] = val;
+              return rem;
+            }
+            it = it[p];
+          } else if (it.length === p) {
+            it.push(val);
+            return nonexistent;
+          }
+        } else {
+          if (typeof it[step] === 'undefined') {
+            if (force) {
+              if (cursor === end) {
+                it[step] = val;
+                return nonexistent;
+              }
+              it = it[step] = {};
+              continue;
+            }
+            return nonexistent;
+          }
+          if (cursor === end) {
+            rem = it[step];
+            it[step] = val;
+            return rem;
+          }
+          it = it[step];
+        }
+      }
+    }
+    return it;
+  }
+
+  function looksLikeFragment(ptr) {
+    return ptr && ptr.length && ptr[0] === '#';
+  }
+
+  function pickDecoder(ptr) {
+    return (looksLikeFragment(ptr)) ? decodeUriFragmentIdentifier : decodePointer;
+  }
+
+  let $path = Symbol();
+  let $orig = Symbol();
+  let $pointer = Symbol();
+  let $fragmentId = Symbol();
+
+  class JsonPointer {
+
+    constructor(ptr) {
+      this[$orig] = ptr;
+      this[$path] = (Array.isArray(ptr)) ? ptr : pickDecoder(ptr)(ptr);
+      Object.defineProperty(this, 'get', {
+        enumerable: true,
+        value: compilePointerDereference(this.path)
+      });
+    }
+
+    get path() {
+      return this[$path];
+    }
+
+    get pointer() {
+      if (!this[$pointer]) {
+        this[$pointer] = encodePointer(this.path);
+      }
+      return this[$pointer];
+    }
+
+    get uriFragmentIdentifier() {
+      if (!this[$fragmentId]) {
+        this[$fragmentId] = encodeUriFragmentIdentifier(this.path);
+      }
+      return this[$fragmentId];
+    }
+
+    has(target) {
+      return typeof(this.get(target)) != 'undefined';
+    }
+
+  }
+
+  class JsonReference {
+
+    constructor(pointer) {
+      this[$pointer] = pointer;
+    }
+
+    get $ref() {
+      return this[$pointer].uriFragmentIdentifier;
+    }
+
+    resolve(target) {
+      return this[$pointer].get(target);
+    }
+
+    toString() {
+      return this.$ref;
+    }
+
+  }
+
+  JsonReference.isReference = function(obj) {
+    return obj && obj instanceof JsonReference ||
+      (typeof obj.$ref === 'string' &&
+        typeof obj.resolve === 'function');
+  };
+
+  function visit(target, visitor, cycle) {
+    var items, i, ilen, j, jlen, it, path, cursor, typeT;
+    var distinctObjects;
+    var q = new Array();
+    var qcursor = 0;
+    q.push({
+      obj: target,
+      path: []
+    });
+    if (cycle) {
+      distinctObjects = new Map();
+    }
+    visitor(encodePointer([]), target);
+    while (qcursor < q.length) {
+      cursor = q[qcursor++];
+      typeT = typeof cursor.obj;
+      if (typeT === 'object' && cursor.obj !== null) {
+        if (Array.isArray(cursor.obj)) {
+          j = -1;
+          jlen = cursor.obj.length;
+          while (++j < jlen) {
+            it = cursor.obj[j];
+            path = cursor.path.concat(j);
+            if (typeof it === 'object' && it !== null) {
+              if (cycle && distinctObjects.has(it)) {
+                visitor(encodePointer(path), new JsonReference(distinctObjects.get(it)));
+                continue;
+              }
+              q.push({
+                obj: it,
+                path: path
+              });
+              if (cycle) {
+                distinctObjects.set(it, new JsonPointer(encodeUriFragmentIdentifier(path)));
+              }
+            }
+            visitor(encodePointer(path), it);
+          }
+        } else {
+          items = Object.keys(cursor.obj);
+          ilen = items.length;
+          i = -1;
+          while (++i < ilen) {
+            it = cursor.obj[items[i]];
+            path = cursor.path.concat(items[i]);
+            if (typeof it === 'object' && it !== null) {
+              if (cycle && distinctObjects.has(it)) {
+                visitor(encodePointer(path), new JsonReference(distinctObjects.get(it)));
+                continue;
+              }
+              q.push({
+                obj: it,
+                path: path
+              });
+              if (cycle) {
+                distinctObjects.set(it, new JsonPointer(encodeUriFragmentIdentifier(path)));
+              }
+            }
+            visitor(encodePointer(path), it);
+          }
+        }
+      }
+    }
+  }
+
+  JsonPointer.prototype.set = function(target, value, force) {
+    return setValueAtPath(target, value, this.path, force);
+  };
+
+  JsonPointer.prototype.toString = function() {
+    return this.original;
+  };
+
+  JsonPointer.create = function(ptr) {
+    return new JsonPointer(ptr);
+  };
+
+  JsonPointer.has = function(target, ptr) {
+    return hasValueAtPath(target, pickDecoder(ptr)(ptr));
+  };
+
+  JsonPointer.get = function(target, ptr) {
+    return getValueAtPath(target, pickDecoder(ptr)(ptr));
+  };
+
+  JsonPointer.set = function(target, ptr, val, force) {
+    return setValueAtPath(target, val, pickDecoder(ptr)(ptr), force);
+  };
+
+  JsonPointer.list = function(target, fragmentId) {
+    var res = [];
+    var visitor = (fragmentId) ?
+      function(ptr, val) {
+        res.push({
+          fragmentId: encodeUriFragmentIdentifier(decodePointer(ptr)),
+          value: val
+        });
+      } :
+      function(ptr, val) {
+        res.push({
+          pointer: ptr,
+          value: val
+        });
+      };
+    visit(target, visitor);
+    return res;
+  };
+
+  JsonPointer.flatten = function(target, fragmentId) {
+    var res = {};
+    var visitor = (fragmentId) ?
+      function(ptr, val) {
+        res[encodeUriFragmentIdentifier(decodePointer(ptr))] = val;
+      } :
+      function(ptr, val) {
+        res[ptr] = val;
+      };
+    visit(target, visitor);
+    return res;
+  };
+
+  JsonPointer.map = function(target, fragmentId) {
+    var res = new Map();
+    var visitor = (fragmentId) ?
+      function(ptr, val) {
+        res.set(encodeUriFragmentIdentifier(decodePointer(ptr)), val);
+      } : res.set.bind(res);
+    visit(target, visitor);
+    return res;
+  };
+
+  JsonPointer.visit = visit;
+
+  JsonPointer.decode = function(ptr) {
+    return pickDecoder(ptr)(ptr);
+  };
+
+  JsonPointer.decodePointer = decodePointer;
+  JsonPointer.encodePointer = encodePointer;
+  JsonPointer.decodeUriFragmentIdentifier = decodeUriFragmentIdentifier;
+  JsonPointer.encodeUriFragmentIdentifier = encodeUriFragmentIdentifier;
+
+  JsonPointer.JsonReference = JsonReference;
+  JsonPointer.isReference = JsonReference.isReference;
+
+  JsonPointer.noConflict = function() {
+    root.JsonPointer = savedJsonPointer;
+    return JsonPointer;
+  };
+
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports) {
+      exports = module.exports = JsonPointer;
+    }
+    exports.JsonPointer = JsonPointer;
+  } else {
+    root.JsonPointer = JsonPointer;
+  }
+}).call(this); // eslint-disable-line no-invalid-this
+
+},{}]},{},[1])
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm5vZGVfbW9kdWxlcy9icm93c2VyaWZ5L25vZGVfbW9kdWxlcy9icm93c2VyLXBhY2svX3ByZWx1ZGUuanMiLCJicm93c2VyLmpzIiwibm9kZV9tb2R1bGVzL2pzb24tbWFya3VwL2luZGV4LmpzIiwibm9kZV9tb2R1bGVzL2pzb24tcHRyL2luZGV4LmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBO0FDQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FDcktBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUNwRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBIiwiZmlsZSI6ImdlbmVyYXRlZC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzQ29udGVudCI6WyIoZnVuY3Rpb24gZSh0LG4scil7ZnVuY3Rpb24gcyhvLHUpe2lmKCFuW29dKXtpZighdFtvXSl7dmFyIGE9dHlwZW9mIHJlcXVpcmU9PVwiZnVuY3Rpb25cIiYmcmVxdWlyZTtpZighdSYmYSlyZXR1cm4gYShvLCEwKTtpZihpKXJldHVybiBpKG8sITApO3ZhciBmPW5ldyBFcnJvcihcIkNhbm5vdCBmaW5kIG1vZHVsZSAnXCIrbytcIidcIik7dGhyb3cgZi5jb2RlPVwiTU9EVUxFX05PVF9GT1VORFwiLGZ9dmFyIGw9bltvXT17ZXhwb3J0czp7fX07dFtvXVswXS5jYWxsKGwuZXhwb3J0cyxmdW5jdGlvbihlKXt2YXIgbj10W29dWzFdW2VdO3JldHVybiBzKG4/bjplKX0sbCxsLmV4cG9ydHMsZSx0LG4scil9cmV0dXJuIG5bb10uZXhwb3J0c312YXIgaT10eXBlb2YgcmVxdWlyZT09XCJmdW5jdGlvblwiJiZyZXF1aXJlO2Zvcih2YXIgbz0wO288ci5sZW5ndGg7bysrKXMocltvXSk7cmV0dXJuIHN9KSIsInZhciBqc29uTWFya3VwID0gcmVxdWlyZSgnanNvbi1tYXJrdXAnKVxudmFyIEpzb25Qb2ludGVyID0gcmVxdWlyZSgnanNvbi1wdHInKVxuXG5hbmd1bGFyLm1vZHVsZSgnYXBwJywgWyd1aS5ib290c3RyYXAnLCAnbmdTYW5pdGl6ZSddKS5jb25maWcoZnVuY3Rpb24oJGh0dHBQcm92aWRlcil7XG4gICAgJGh0dHBQcm92aWRlci5kZWZhdWx0cy5oZWFkZXJzLmNvbW1vbltcIlgtUmVxdWVzdGVkLVdpdGhcIl0gPSAnWE1MSHR0cFJlcXVlc3QnO1xufSkuY29udHJvbGxlcignY29udHJvbGxlcicsIGZ1bmN0aW9uKCRzY29wZSwgJGh0dHAsICR0aW1lb3V0KXtcbiAgICAkaHR0cC5nZXQoJ2h0dHBzOi8vaG9vay5pby9oaXBwb3BvdGFtdXMyL2pzb24tZG9jcy1leGFtcGxlJykudGhlbihmdW5jdGlvbihyZXMpe1xuICAgICAgICAkc2NvcGUuc2NoZW1hID0gbWFwSlNPTihyZXMuZGF0YSlcbiAgICB9KVxuXG4gICAgZnVuY3Rpb24gbWFwSlNPTihzY2hlbWEpIHtcbiAgICAgICAgLyogaSBjb3VsZCBvcHRpbWl6ZSB0aGlzIHByZXR0eSBlYXNpbHkuIGlmIGl0IGVhdHMgeW91ciBicm93c2VyLCBsZXQgbWUga25vdywgYW5kIGknbGwgbWFrZSBpdCBiZXR0ZXIuLi4gaWYgeW91J3JlIHJlYWRpbmcgdGhpcywgeW91IGNvdWxkIHByb2JhYmx5IGRvIGl0IHRvby5cbiAgICAgICAgaSB3aWxsIGhhcHBpbHkgZG8gaXQgZm9yIHNvbWVvbmUgd2hvIGZvdW5kIHRoaXMgdXNlZnVsLiAqL1xuICAgICAgICByZXBsYWNlUmVmcyhzY2hlbWEpXG5cbiAgICAgICAgJHNjb3BlLnJlc291cmNlcyA9IFtdXG4gICAgICAgIGJ1aWxkRmxhdFJlc291cmNlc0xpc3Qoc2NoZW1hKVxuICAgICAgICAkc2NvcGUuc2lkZWJhckl0ZW1zID0gYnVpbGRTaWRlYmFyKCRzY29wZS5yZXNvdXJjZXMpXG4gICAgICAgIF8ubWFwKCRzY29wZS5yZXNvdXJjZXMsIGZ1bmN0aW9uIChyZXNvdXJjZSkge1xuICAgICAgICAgICAgbWFwUmVxdWlyZWRPbnRvUHJvcGVydGllcyhyZXNvdXJjZSlcbiAgICAgICAgfSlcbiAgICB9XG5cbiAgICBmdW5jdGlvbiByZXBsYWNlUmVmcyAoc2NoZW1hKSB7XG4gICAgICAgIC8qIFRoaXMgY3Jhd2xzIHRoZSBKU09OIHNjaGVtYSBmb3IgYWxsICRyZWZzLCBhbmQgcmVwbGFjZXMgdGhlbSB3aXRoIHRoZSBzY2hlbWEgdGhleSdyZSByZWZlcmVuY2luZyAqL1xuICAgICAgICAvKiBNYXliZSBJJ20gbWlzdW5kZXJzdGFuZGluZyBKU09OIHBvaW50ZXJzLiBJIHdhcyBob3BpbmcgSSB0aGVyZSB3YXMgc29tZSBtYWdpYyBKU09OIHB0ciBhcGkgZm4gdGhhdCByZXBsYWNlcyBhbGwgJHJlZnMgd2l0aCB0aGUgb2JqIHRoZXkgcmVmZXJlbmNlICovXG4gICAgICAgIHZhciBwdHIgPSBKc29uUG9pbnRlci5ub0NvbmZsaWN0KClcbiAgICAgICAgXy5mb3JFYWNoKF8ua2V5cyhwdHIuZmxhdHRlbihzY2hlbWEpKSwgZnVuY3Rpb24gKGl0ZW0pIHtcbiAgICAgICAgICAgICB2YXIgcGF0aExpc3QgPSBwdHIuZGVjb2RlKGl0ZW0pXG4gICAgICAgICAgICAgaWYgKHBhdGhMaXN0W3BhdGhMaXN0Lmxlbmd0aC0xXSA9PT0gJyRyZWYnKSB7XG4gICAgICAgICAgICAgICAgdmFyIG9ialBhdGggPSAnIy8nICsgXy5zbGljZShwYXRoTGlzdCwgMCwgcGF0aExpc3QubGVuZ3RoLTEpLmpvaW4oJy8nKSAvLyBidWlsZGluZyBhYnMgcGF0aCB0byBpdGVtIHdpdGggYSAkcmVmXG4gICAgICAgICAgICAgICAgcHRyLnNldChzY2hlbWEsIG9ialBhdGgsIHB0ci5nZXQoc2NoZW1hLCBwdHIuZ2V0KHNjaGVtYSwgaXRlbSkpKSAvLyBzZXQgdGhhdCBpdGVtIHRvIHRoZSBzY2hlbWEgcmVmZXJlbmNlZCBpbiBpdCdzICRyZWZcbiAgICAgICAgICAgICB9XG4gICAgICAgIH0pXG4gICAgfVxuXG4gICAgZnVuY3Rpb24gYnVpbGRGbGF0UmVzb3VyY2VzTGlzdCAoc2NoZW1hKSB7XG4gICAgICAgIF8uZm9yRWFjaChfLmtleXMoc2NoZW1hKSwgZnVuY3Rpb24gKGtleSkge1xuICAgICAgICAgICAgdmFyIGl0ZW0gPSBzY2hlbWFba2V5XVxuICAgICAgICAgICAgaWYgKF8uaXNPYmplY3QoaXRlbSkpIHtcbiAgICAgICAgICAgICAgICBfLmZvckVhY2goXy5rZXlzKGl0ZW0pLCBmdW5jdGlvbiAoaykge1xuICAgICAgICAgICAgICAgICAgICBpZiAoayA9PT0gJ3Jlc291cmNlJykge1xuICAgICAgICAgICAgICAgICAgICAgICAgYnVpbGRGbGF0UmVzb3VyY2VzTGlzdChpdGVtKVxuICAgICAgICAgICAgICAgICAgICAgICAgaXRlbSA9IF8ub21pdChpdGVtLCBrKVxuICAgICAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgICAgfSlcbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIGlmIChrZXkgPT09ICdyZXNvdXJjZScpIHtcbiAgICAgICAgICAgICAgICAkc2NvcGUucmVzb3VyY2VzLnB1c2goc2NoZW1hKVxuICAgICAgICAgICAgfVxuICAgICAgICB9KVxuICAgIH1cblxuICAgIGZ1bmN0aW9uIGJ1aWxkU2lkZWJhciAocmVzb3VyY2VzKSB7XG4gICAgICAgIHJldHVybiBfLm1hcChyZXNvdXJjZXMsIGZ1bmN0aW9uIChpdGVtKSB7XG4gICAgICAgICAgICByZXR1cm4ge1xuICAgICAgICAgICAgICAgIG5hbWU6IGl0ZW0ucmVzb3VyY2UsXG4gICAgICAgICAgICAgICAgc3ViUmVzb3VyY2VzOiBfLmNoYWluKGl0ZW0pLmtleXMoKS5tYXAoZnVuY3Rpb24gKGtleSkge1xuICAgICAgICAgICAgICAgICAgICAvKiBtYXBwaW5nIHRoZSBuYW1lIG9mIHRoZSByZXNvdXJjZSBhbmQgdGhlIHVyaS4gbmFtZSBmb3IgdGhlIHRpdGxlIGluIHNpZGViYXIsIGlkICh1cmkpIGlzIHVzZWQgZm9yIGJvb2ttYXJraW5nIHRoZSBpdGVtICovXG4gICAgICAgICAgICAgICAgICAgIHJldHVybiB7XG4gICAgICAgICAgICAgICAgICAgICAgICBuYW1lOiBpdGVtW2tleV0ubmFtZSxcbiAgICAgICAgICAgICAgICAgICAgICAgIGlkOiBpdGVtW2tleV0uaWQsXG4gICAgICAgICAgICAgICAgICAgICAgICBtZXRob2Q6IGl0ZW1ba2V5XS5tZXRob2QsXG4gICAgICAgICAgICAgICAgICAgIH1cbiAgICAgICAgICAgICAgICB9KS5maWx0ZXIoJ25hbWUnKS52YWx1ZSgpXG4gICAgICAgICAgICB9XG4gICAgICAgIH0pXG4gICAgfVxuXG4gICAgZnVuY3Rpb24gbWFwUmVxdWlyZWRPbnRvUHJvcGVydGllcyAocmVzb3VyY2UpIHtcbiAgICAgICAgdmFyIHByb3BlcnRpZXMgPSBfLmdldChyZXNvdXJjZSwgJ3Byb3BlcnRpZXMnKVxuICAgICAgICB2YXIgcmVxdWlyZWRQcm9wZXJ0aWVzID0gXy5nZXQocmVzb3VyY2UsICdyZXF1aXJlZCcpXG4gICAgICAgIGlmIChwcm9wZXJ0aWVzICYmIHJlcXVpcmVkUHJvcGVydGllcykge1xuICAgICAgICAgICAgXy5mb3JFYWNoKHJlcXVpcmVkUHJvcGVydGllcywgZnVuY3Rpb24gKHByb3BlcnR5TmFtZSkge1xuICAgICAgICAgICAgICAgIHZhciBwcm9wZXJ0eSA9IF8uZ2V0KHByb3BlcnRpZXMsIHByb3BlcnR5TmFtZSlcbiAgICAgICAgICAgICAgICBpZiAoIXByb3BlcnR5KSB7XG4gICAgICAgICAgICAgICAgICAgIGNvbnNvbGUubG9nKFxuICAgICAgICAgICAgICAgICAgICAgICAgXCJQcm9wZXJ0eSB7cHJvcH0gaXMgbGlzdGVkIGFzIHJlcXVpcmVkIGluIHJlc291cmNlIHtyZXNvdXJjZX0sIGJ1dCBpcyBub3QgaW4gdGhlIHNjaGVtYVwiXG4gICAgICAgICAgICAgICAgICAgICAgICAucmVwbGFjZSgne3Byb3B9JywgcHJvcGVydHlOYW1lKS5yZXBsYWNlKCd7cmVzb3VyY2V9JywgXy5nZXQocmVzb3VyY2UsICduYW1lJykpXG4gICAgICAgICAgICAgICAgICAgIClcbiAgICAgICAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgICAgICAgICBfLm1lcmdlKHByb3BlcnR5LCB7IHJlcXVpcmVkOiB0cnVlIH0pXG4gICAgICAgICAgICAgICAgfVxuICAgICAgICAgICAgfSlcbiAgICAgICAgfVxuICAgICAgICAvKiBpZiB0aGVyZSBpcyBhbiBvYmplY3QsIHJlY3Vyc2Ugb250byBpdCAqL1xuICAgICAgICBfLmZvckVhY2goXy5rZXlzKHJlc291cmNlKSwgZnVuY3Rpb24gKGtleSkge1xuICAgICAgICAgICAgLyogaWYgaXQncyBhbiBvYmplY3QsIGdvIGRlZXBlciAqL1xuICAgICAgICAgICAgaWYgKF8uaXNPYmplY3QocmVzb3VyY2Vba2V5XSkpIHtcbiAgICAgICAgICAgICAgICBtYXBSZXF1aXJlZE9udG9Qcm9wZXJ0aWVzKHJlc291cmNlW2tleV0pXG4gICAgICAgICAgICB9XG4gICAgICAgICAgICBpZiAoa2V5ID09PSAnaXRlbXMnICYmIF8uaXNBcnJheShyZXNvdXJjZVtrZXldKSkge1xuICAgICAgICAgICAgICAgIC8qIGl0ZW1zIGNhbiBoYXZlIGFuIGFycmF5IG9mIG9iamVjdHMsIHNvIHRyZWUgcmVjdXJzaW9uIGhlcmUgOikgKi9cbiAgICAgICAgICAgICAgICBfLmZvckVhY2gocmVzb3VyY2Vba2V5XSwgZnVuY3Rpb24gKGl0ZW0pIHtcbiAgICAgICAgICAgICAgICAgICAgbWFwUmVxdWlyZWRPbnRvUHJvcGVydGllcyhyZXNvdXJjZVtrZXldKVxuICAgICAgICAgICAgICAgIH0pXG4gICAgICAgICAgICB9XG4gICAgICAgIH0pXG4gICAgfVxuXG4gICAgJHNjb3BlLmZvcm1hdFR5cGUgPSBmdW5jdGlvbiAoaXRlbSkge1xuICAgICAgICB2YXIgdHlwZSA9IF8uZ2V0KGl0ZW0sICd0eXBlJylcbiAgICAgICAgaWYgKHR5cGUpIHtcbiAgICAgICAgICAgIHJldHVybiB0eXBlXG4gICAgICAgIH0gZWxzZSBpZiAoXy5nZXQoaXRlbSwgJ2FueU9mJykpIHtcbiAgICAgICAgICAgIHJldHVybiAnYW55T2YnXG4gICAgICAgIH0gZWxzZSBpZiAoXy5nZXQoaXRlbSwgJ2FsbE9mJykpIHtcbiAgICAgICAgICAgIHJldHVybiAnYWxsT2YnXG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICByZXR1cm5cbiAgICAgICAgfVxuICAgIH1cblxuICAgICRzY29wZS5mb3JtYXRTcGVjTWV0YSA9IGZ1bmN0aW9uIChzcGVjKSB7XG4gICAgICAgIHZhciBhbnlPZiA9IF8uZ2V0KHNwZWMsICdhbnlPZicpXG4gICAgICAgIGlmIChhbnlPZikge1xuICAgICAgICAgICAgcmV0dXJuIGZvcm1hdEFycmF5TWV0YShhbnlPZilcbiAgICAgICAgfVxuICAgICAgICB2YXIgYWxsT2YgPSBfLmdldChzcGVjLCAnYWxsT2YnKVxuICAgICAgICBpZiAoYWxsT2YpIHtcbiAgICAgICAgICAgIHJldHVybiBmb3JtYXRBcnJheU1ldGEoYWxsT2YpXG4gICAgICAgIH1cbiAgICAgICAgaWYgKCFfLmlzT2JqZWN0KHNwZWMpKSB7XG4gICAgICAgICAgICByZXR1cm5cbiAgICAgICAgfVxuXG4gICAgICAgIHZhciBvbWl0dGVkU3BlY3MgPSBfLm9taXQoc3BlYywgWyd0eXBlJywgJ2Rlc2NyaXB0aW9uJywgJyQkaGFzaEtleScsICdyZXF1aXJlZCcsICdpdGVtcyddKVxuICAgICAgICBpZiAoIV8ua2V5cyhvbWl0dGVkU3BlY3MpLmxlbmd0aCkge1xuICAgICAgICAgICAgcmV0dXJuXG4gICAgICAgIH1cblxuICAgICAgICByZXR1cm4gXy5tYXAoXy5rZXlzKG9taXR0ZWRTcGVjcyksIGZ1bmN0aW9uIChrZXkpIHtcbiAgICAgICAgICAgIHZhciB2YWwgPSBvbWl0dGVkU3BlY3Nba2V5XVxuICAgICAgICAgICAgaWYgKF8uaXNBcnJheSh2YWwpKSB7XG4gICAgICAgICAgICAgICAgcmV0dXJuICc8c3Ryb25nPicra2V5Kyc6PC9zdHJvbmc+ICcrdmFsLmpvaW4oJywgJylcbiAgICAgICAgICAgIH0gZWxzZSBpZiAoa2V5ID09PSAncGF0dGVybicpIHtcbiAgICAgICAgICAgICAgICByZXR1cm4gJzxzdHJvbmc+JytrZXkrJzo8L3N0cm9uZz4gJysnL3ZhbC8nLnJlcGxhY2UoJ3ZhbCcsIHZhbClcbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIHJldHVybiAnPHN0cm9uZz4nK2tleSsnOjwvc3Ryb25nPiAnK3ZhbFxuICAgICAgICB9KS5qb2luKCcsICcpXG4gICAgfVxuXG4gICAgJHNjb3BlLmZvcm1hdE5vbk9ialNwZWNNZXRhID0gZnVuY3Rpb24gKHNwZWMpIHtcbiAgICAgICAgdmFyIG9taXR0ZWRTcGVjcyA9IF8ub21pdChzcGVjLCBbJ3R5cGUnLCAnZGVzY3JpcHRpb24nLCAnJCRoYXNoS2V5JywgJ3JlcXVpcmVkJywgJ3N0YXR1cyddKVxuICAgICAgICBpZiAoIV8ua2V5cyhvbWl0dGVkU3BlY3MpLmxlbmd0aCkge1xuICAgICAgICAgICAgcmV0dXJuXG4gICAgICAgIH1cblxuICAgICAgICByZXR1cm4gXy5tYXAoXy5rZXlzKG9taXR0ZWRTcGVjcyksIGZ1bmN0aW9uIChrZXkpIHtcbiAgICAgICAgICAgIHJldHVybiAnPHN0cm9uZz4nK2tleSsnOjwvc3Ryb25nPiAnK29taXR0ZWRTcGVjc1trZXldXG4gICAgICAgIH0pLmpvaW4oJywgJylcbiAgICB9XG5cbiAgICAkc2NvcGUuaHRtbGlmeUpTT04gPSBmdW5jdGlvbiAob2JqKSB7XG4gICAgICAgIHJldHVybiBqc29uTWFya3VwKG9iailcbiAgICB9XG5cbiAgICBmdW5jdGlvbiBmb3JtYXRBcnJheU1ldGEgKGl0ZW1zKSB7XG4gICAgICAgIHJldHVybiBfLm1hcChpdGVtcywgZnVuY3Rpb24gKGl0ZW0pIHtcbiAgICAgICAgICAgIHJldHVybiAneycgKyBfLm1hcChfLmtleXMoaXRlbSksIGZ1bmN0aW9uIChrZXkpIHtcbiAgICAgICAgICAgICAgICByZXR1cm4gJzxzdHJvbmc+JytrZXkrJzo8L3N0cm9uZz4gJyArIGl0ZW1ba2V5XVxuICAgICAgICAgICAgfSkuam9pbignLCAnKVxuICAgICAgICB9KS5qb2luKCd9LCAnKSArICd9J1xuICAgIH1cbn0pXG4iLCJ2YXIgSU5ERU5UID0gJyAgICAnO1xuXG52YXIgdHlwZSA9IGZ1bmN0aW9uKGRvYykge1xuXHRpZiAoZG9jID09PSBudWxsKSByZXR1cm4gJ251bGwnO1xuXHRpZiAoQXJyYXkuaXNBcnJheShkb2MpKSByZXR1cm4gJ2FycmF5Jztcblx0aWYgKHR5cGVvZiBkb2MgPT09ICdzdHJpbmcnICYmIC9eaHR0cHM/Oi8udGVzdChkb2MpKSByZXR1cm4gJ2xpbmsnO1xuXG5cdHJldHVybiB0eXBlb2YgZG9jO1xufTtcblxudmFyIGVzY2FwZSA9IGZ1bmN0aW9uKHN0cikge1xuXHRyZXR1cm4gc3RyLnJlcGxhY2UoLzwvZywgJyZsdDsnKS5yZXBsYWNlKC8+L2csICcmZ3Q7Jyk7XG59O1xuXG5tb2R1bGUuZXhwb3J0cyA9IGZ1bmN0aW9uKGRvYykge1xuXHR2YXIgaW5kZW50ID0gJyc7XG5cblx0dmFyIGZvckVhY2ggPSBmdW5jdGlvbihsaXN0LCBzdGFydCwgZW5kLCBmbikge1xuXHRcdGlmICghbGlzdC5sZW5ndGgpIHJldHVybiBzdGFydCsnICcrZW5kO1xuXG5cdFx0dmFyIG91dCA9IHN0YXJ0KydcXG4nO1xuXG5cdFx0aW5kZW50ICs9IElOREVOVDtcblx0XHRsaXN0LmZvckVhY2goZnVuY3Rpb24oa2V5LCBpKSB7XG5cdFx0XHRvdXQgKz0gaW5kZW50K2ZuKGtleSkrKGkgPCBsaXN0Lmxlbmd0aC0xID8gJywnIDogJycpKydcXG4nO1xuXHRcdH0pO1xuXHRcdGluZGVudCA9IGluZGVudC5zbGljZSgwLCAtSU5ERU5ULmxlbmd0aCk7XG5cblx0XHRyZXR1cm4gb3V0ICsgaW5kZW50K2VuZDtcblx0fTtcblxuXHR2YXIgdmlzaXQgPSBmdW5jdGlvbihvYmopIHtcblx0XHRpZiAob2JqID09PSB1bmRlZmluZWQpIHJldHVybiAnJztcblxuXHRcdHN3aXRjaCAodHlwZShvYmopKSB7XG5cdFx0XHRjYXNlICdib29sZWFuJzpcblx0XHRcdHJldHVybiAnPHNwYW4gY2xhc3M9XCJqc29uLW1hcmt1cC1ib29sXCI+JytvYmorJzwvc3Bhbj4nO1xuXG5cdFx0XHRjYXNlICdudW1iZXInOlxuXHRcdFx0cmV0dXJuICc8c3BhbiBjbGFzcz1cImpzb24tbWFya3VwLW51bWJlclwiPicrb2JqKyc8L3NwYW4+JztcblxuXHRcdFx0Y2FzZSAnbnVsbCc6XG5cdFx0XHRyZXR1cm4gJzxzcGFuIGNsYXNzPVwianNvbi1tYXJrdXAtbnVsbFwiPm51bGw8L3NwYW4+JztcblxuXHRcdFx0Y2FzZSAnc3RyaW5nJzpcblx0XHRcdHJldHVybiAnPHNwYW4gY2xhc3M9XCJqc29uLW1hcmt1cC1zdHJpbmdcIj5cIicrZXNjYXBlKG9iai5yZXBsYWNlKC9cXG4vZywgJ1xcbicraW5kZW50KSkrJ1wiPC9zcGFuPic7XG5cblx0XHRcdGNhc2UgJ2xpbmsnOlxuXHRcdFx0cmV0dXJuICc8c3BhbiBjbGFzcz1cImpzb24tbWFya3VwLXN0cmluZ1wiPlwiPGEgaHJlZj1cIicrZXNjYXBlKG9iaikrJ1wiPicrZXNjYXBlKG9iaikrJzwvYT5cIjwvc3Bhbj4nO1xuXG5cdFx0XHRjYXNlICdhcnJheSc6XG5cdFx0XHRyZXR1cm4gZm9yRWFjaChvYmosICdbJywgJ10nLCB2aXNpdCk7XG5cblx0XHRcdGNhc2UgJ29iamVjdCc6XG5cdFx0XHR2YXIga2V5cyA9IE9iamVjdC5rZXlzKG9iaikuZmlsdGVyKGZ1bmN0aW9uKGtleSkge1xuXHRcdFx0XHRyZXR1cm4gb2JqW2tleV0gIT09IHVuZGVmaW5lZDtcblx0XHRcdH0pO1xuXG5cdFx0XHRyZXR1cm4gZm9yRWFjaChrZXlzLCAneycsICd9JywgZnVuY3Rpb24oa2V5KSB7XG5cdFx0XHRcdHJldHVybiAnPHNwYW4gY2xhc3M9XCJqc29uLW1hcmt1cC1rZXlcIj4nK2tleSArICc6PC9zcGFuPiAnK3Zpc2l0KG9ialtrZXldKTtcblx0XHRcdH0pO1xuXHRcdH1cblxuXHRcdHJldHVybiAnJztcblx0fTtcblxuXHRyZXR1cm4gJzxkaXYgY2xhc3M9XCJqc29uLW1hcmt1cFwiPicrdmlzaXQoZG9jKSsnPC9kaXY+Jztcbn07XG4iLCIndXNlIHN0cmljdCc7XG5cbihmdW5jdGlvbigpIHtcbiAgdmFyIHJvb3QgPSB0aGlzOyAvLyBlaXRoZXIgdGhlIG1vZHVsZSBvciB0aGUgd2luZG93IChpbiBhIGJyb3dzZXIpXG4gIHZhciBzYXZlZEpzb25Qb2ludGVyID0gcm9vdC5Kc29uUG9pbnRlcjtcblxuICBmdW5jdGlvbiByZXBsYWNlKHN0ciwgZmluZCwgcmVwbCkge1xuICAgIC8vIG1vZGlmaWVkIGZyb20gaHR0cDovL2pzcGVyZi5jb20vamF2YXNjcmlwdC1yZXBsYWNlLWFsbC8xMFxuICAgIHZhciBvcmlnID0gc3RyLnRvU3RyaW5nKCk7XG4gICAgdmFyIHJlcyA9ICcnO1xuICAgIHZhciByZW0gPSBvcmlnO1xuICAgIHZhciBiZWcgPSAwO1xuICAgIHZhciBlbmQgPSAtMTtcbiAgICB3aGlsZSAoKGVuZCA9IHJlbS5pbmRleE9mKGZpbmQpKSA+IC0xKSB7XG4gICAgICByZXMgKz0gb3JpZy5zdWJzdHJpbmcoYmVnLCBiZWcgKyBlbmQpICsgcmVwbDtcbiAgICAgIHJlbSA9IHJlbS5zdWJzdHJpbmcoZW5kICsgZmluZC5sZW5ndGgsIHJlbS5sZW5ndGgpO1xuICAgICAgYmVnICs9IGVuZCArIGZpbmQubGVuZ3RoO1xuICAgIH1cbiAgICBpZiAocmVtLmxlbmd0aCA+IDApIHtcbiAgICAgIHJlcyArPSBvcmlnLnN1YnN0cmluZyhvcmlnLmxlbmd0aCAtIHJlbS5sZW5ndGgsIG9yaWcubGVuZ3RoKTtcbiAgICB9XG4gICAgcmV0dXJuIHJlcztcbiAgfVxuXG4gIGZ1bmN0aW9uIGRlY29kZUZyYWdtZW50U2VnbWVudHMoc2VnbWVudHMpIHtcbiAgICB2YXIgaSA9IC0xO1xuICAgIHZhciBsZW4gPSBzZWdtZW50cy5sZW5ndGg7XG4gICAgdmFyIHJlcyA9IG5ldyBBcnJheShsZW4pO1xuICAgIHdoaWxlICgrK2kgPCBsZW4pIHtcbiAgICAgIHJlc1tpXSA9IHJlcGxhY2UocmVwbGFjZShkZWNvZGVVUklDb21wb25lbnQoJycgKyBzZWdtZW50c1tpXSksICd+MScsICcvJyksICd+MCcsICd+Jyk7XG4gICAgfVxuICAgIHJldHVybiByZXM7XG4gIH1cblxuICBmdW5jdGlvbiBlbmNvZGVGcmFnbWVudFNlZ21lbnRzKHNlZ21lbnRzKSB7XG4gICAgdmFyIGkgPSAtMTtcbiAgICB2YXIgbGVuID0gc2VnbWVudHMubGVuZ3RoO1xuICAgIHZhciByZXMgPSBuZXcgQXJyYXkobGVuKTtcbiAgICB3aGlsZSAoKytpIDwgbGVuKSB7XG4gICAgICBpZiAodHlwZW9mIHNlZ21lbnRzW2ldID09PSAnc3RyaW5nJykge1xuICAgICAgICByZXNbaV0gPSBlbmNvZGVVUklDb21wb25lbnQocmVwbGFjZShyZXBsYWNlKHNlZ21lbnRzW2ldLCAnficsICd+MCcpLCAnLycsICd+MScpKTtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIHJlc1tpXSA9IHNlZ21lbnRzW2ldO1xuICAgICAgfVxuICAgIH1cbiAgICByZXR1cm4gcmVzO1xuICB9XG5cbiAgZnVuY3Rpb24gZGVjb2RlUG9pbnRlclNlZ21lbnRzKHNlZ21lbnRzKSB7XG4gICAgdmFyIGkgPSAtMTtcbiAgICB2YXIgbGVuID0gc2VnbWVudHMubGVuZ3RoO1xuICAgIHZhciByZXMgPSBuZXcgQXJyYXkobGVuKTtcbiAgICB3aGlsZSAoKytpIDwgbGVuKSB7XG4gICAgICByZXNbaV0gPSByZXBsYWNlKHJlcGxhY2Uoc2VnbWVudHNbaV0sICd+MScsICcvJyksICd+MCcsICd+Jyk7XG4gICAgfVxuICAgIHJldHVybiByZXM7XG4gIH1cblxuICBmdW5jdGlvbiBlbmNvZGVQb2ludGVyU2VnbWVudHMoc2VnbWVudHMpIHtcbiAgICB2YXIgaSA9IC0xO1xuICAgIHZhciBsZW4gPSBzZWdtZW50cy5sZW5ndGg7XG4gICAgdmFyIHJlcyA9IG5ldyBBcnJheShsZW4pO1xuICAgIHdoaWxlICgrK2kgPCBsZW4pIHtcbiAgICAgIGlmICh0eXBlb2Ygc2VnbWVudHNbaV0gPT09ICdzdHJpbmcnKSB7XG4gICAgICAgIHJlc1tpXSA9IHJlcGxhY2UocmVwbGFjZShzZWdtZW50c1tpXSwgJ34nLCAnfjAnKSwgJy8nLCAnfjEnKTtcbiAgICAgIH0gZWxzZSB7XG4gICAgICAgIHJlc1tpXSA9IHNlZ21lbnRzW2ldO1xuICAgICAgfVxuICAgIH1cbiAgICByZXR1cm4gcmVzO1xuICB9XG5cbiAgZnVuY3Rpb24gZGVjb2RlUG9pbnRlcihwdHIpIHtcbiAgICBpZiAodHlwZW9mIHB0ciAhPT0gJ3N0cmluZycpIHtcbiAgICAgIHRocm93IG5ldyBUeXBlRXJyb3IoJ0ludmFsaWQgdHlwZTogSlNPTiBQb2ludGVycyBhcmUgcmVwcmVzZW50ZWQgYXMgc3RyaW5ncy4nKTtcbiAgICB9XG4gICAgaWYgKHB0ci5sZW5ndGggPT09IDApIHtcbiAgICAgIHJldHVybiBbXTtcbiAgICB9XG4gICAgaWYgKHB0clswXSAhPT0gJy8nKSB7XG4gICAgICB0aHJvdyBuZXcgUmVmZXJlbmNlRXJyb3IoJ0ludmFsaWQgSlNPTiBQb2ludGVyIHN5bnRheC4gTm9uLWVtcHR5IHBvaW50ZXIgbXVzdCBiZWdpbiB3aXRoIGEgc29saWR1cyBgL2AuJyk7XG4gICAgfVxuICAgIHJldHVybiBkZWNvZGVQb2ludGVyU2VnbWVudHMocHRyLnN1YnN0cmluZygxKS5zcGxpdCgnLycpKTtcbiAgfVxuXG4gIGZ1bmN0aW9uIGVuY29kZVBvaW50ZXIocGF0aCkge1xuICAgIGlmIChwYXRoICYmICFBcnJheS5pc0FycmF5KHBhdGgpKSB7XG4gICAgICB0aHJvdyBuZXcgVHlwZUVycm9yKCdJbnZhbGlkIHR5cGU6IHBhdGggbXVzdCBiZSBhbiBhcnJheSBvZiBzZWdtZW50cy4nKTtcbiAgICB9XG4gICAgaWYgKHBhdGgubGVuZ3RoID09PSAwKSB7XG4gICAgICByZXR1cm4gJyc7XG4gICAgfVxuICAgIHJldHVybiAnLycuY29uY2F0KGVuY29kZVBvaW50ZXJTZWdtZW50cyhwYXRoKS5qb2luKCcvJykpO1xuICB9XG5cbiAgZnVuY3Rpb24gZGVjb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyKHB0cikge1xuICAgIGlmICh0eXBlb2YgcHRyICE9PSAnc3RyaW5nJykge1xuICAgICAgdGhyb3cgbmV3IFR5cGVFcnJvcignSW52YWxpZCB0eXBlOiBKU09OIFBvaW50ZXJzIGFyZSByZXByZXNlbnRlZCBhcyBzdHJpbmdzLicpO1xuICAgIH1cbiAgICBpZiAocHRyLmxlbmd0aCA9PT0gMCB8fCBwdHJbMF0gIT09ICcjJykge1xuICAgICAgdGhyb3cgbmV3IFJlZmVyZW5jZUVycm9yKCdJbnZhbGlkIEpTT04gUG9pbnRlciBzeW50YXg7IFVSSSBmcmFnbWVudCBpZGV0aWZpZXJzIG11c3QgYmVnaW4gd2l0aCBhIGhhc2guJyk7XG4gICAgfVxuICAgIGlmIChwdHIubGVuZ3RoID09PSAxKSB7XG4gICAgICByZXR1cm4gW107XG4gICAgfVxuICAgIGlmIChwdHJbMV0gIT09ICcvJykge1xuICAgICAgdGhyb3cgbmV3IFJlZmVyZW5jZUVycm9yKCdJbnZhbGlkIEpTT04gUG9pbnRlciBzeW50YXguJyk7XG4gICAgfVxuICAgIHJldHVybiBkZWNvZGVGcmFnbWVudFNlZ21lbnRzKHB0ci5zdWJzdHJpbmcoMikuc3BsaXQoJy8nKSk7XG4gIH1cblxuICBmdW5jdGlvbiBlbmNvZGVVcmlGcmFnbWVudElkZW50aWZpZXIocGF0aCkge1xuICAgIGlmIChwYXRoICYmICFBcnJheS5pc0FycmF5KHBhdGgpKSB7XG4gICAgICB0aHJvdyBuZXcgVHlwZUVycm9yKCdJbnZhbGlkIHR5cGU6IHBhdGggbXVzdCBiZSBhbiBhcnJheSBvZiBzZWdtZW50cy4nKTtcbiAgICB9XG4gICAgaWYgKHBhdGgubGVuZ3RoID09PSAwKSB7XG4gICAgICByZXR1cm4gJyMnO1xuICAgIH1cbiAgICByZXR1cm4gJyMvJy5jb25jYXQoZW5jb2RlRnJhZ21lbnRTZWdtZW50cyhwYXRoKS5qb2luKCcvJykpO1xuICB9XG5cbiAgZnVuY3Rpb24gdG9BcnJheUluZGV4UmVmZXJlbmNlKGFyciwgaWR4KSB7XG4gICAgdmFyIGxlbiA9IGlkeC5sZW5ndGg7XG4gICAgdmFyIGN1cnNvciA9IDA7XG4gICAgaWYgKGxlbiA9PT0gMCB8fCBsZW4gPiAxICYmIGlkeFswXSA9PT0gJzAnKSB7XG4gICAgICByZXR1cm4gLTE7XG4gICAgfVxuICAgIGlmIChsZW4gPT09IDEgJiYgaWR4WzBdID09PSAnLScpIHtcbiAgICAgIHJldHVybiBhcnIubGVuZ3RoO1xuICAgIH1cblxuICAgIHdoaWxlICgrK2N1cnNvciA8IGxlbikge1xuICAgICAgaWYgKGlkeFtjdXJzb3JdIDwgJzAnIHx8IGlkeFtjdXJzb3JdID4gJzknKSB7XG4gICAgICAgIHJldHVybiAtMTtcbiAgICAgIH1cbiAgICB9XG4gICAgcmV0dXJuIHBhcnNlSW50KGlkeCwgMTApO1xuICB9XG5cbiAgZnVuY3Rpb24gaGFzVmFsdWVBdFBhdGgodGFyZ2V0LCBwYXRoKSB7XG4gICAgdmFyIGl0O1xuICAgIHZhciBsZW47XG4gICAgdmFyIGN1cnNvcjtcbiAgICB2YXIgc3RlcDtcbiAgICB2YXIgcDtcbiAgICBpZiAodHlwZW9mIHRhcmdldCAhPT0gJ3VuZGVmaW5lZCcpIHtcbiAgICAgIGl0ID0gdGFyZ2V0O1xuICAgICAgbGVuID0gcGF0aC5sZW5ndGg7XG4gICAgICBjdXJzb3IgPSAtMTtcbiAgICAgIGlmIChsZW4pIHtcbiAgICAgICAgd2hpbGUgKCsrY3Vyc29yIDwgbGVuICYmIGl0KSB7XG4gICAgICAgICAgc3RlcCA9IHBhdGhbY3Vyc29yXTtcbiAgICAgICAgICBpZiAoQXJyYXkuaXNBcnJheShpdCkpIHtcbiAgICAgICAgICAgIGlmIChpc05hTihzdGVwKSB8fCAhaXNGaW5pdGUoc3RlcCkpIHtcbiAgICAgICAgICAgICAgYnJlYWs7XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICBwID0gdG9BcnJheUluZGV4UmVmZXJlbmNlKGl0LCBzdGVwKTtcbiAgICAgICAgICAgIGlmIChpdC5sZW5ndGggPiBwKSB7XG4gICAgICAgICAgICAgIGl0ID0gaXRbcF07XG4gICAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgICBicmVhaztcbiAgICAgICAgICAgIH1cbiAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgaXQgPSBpdFtzdGVwXTtcbiAgICAgICAgICB9XG4gICAgICAgIH1cbiAgICAgIH1cbiAgICAgIHJldHVybiBjdXJzb3IgPT09IGxlbiAmJiB0eXBlb2YgaXQgIT09ICd1bmRlZmluZWQnO1xuICAgIH1cbiAgICByZXR1cm4gZmFsc2U7XG4gIH1cblxuICBmdW5jdGlvbiBnZXRWYWx1ZUF0UGF0aCh0YXJnZXQsIHBhdGgpIHtcbiAgICB2YXIgaXQ7XG4gICAgdmFyIGxlbjtcbiAgICB2YXIgY3Vyc29yO1xuICAgIHZhciBzdGVwO1xuICAgIHZhciBwO1xuICAgIHZhciBub25leGlzdGVudCA9IHVuZGVmaW5lZDtcbiAgICBpZiAodHlwZW9mIHRhcmdldCAhPT0gJ3VuZGVmaW5lZCcpIHtcbiAgICAgIGl0ID0gdGFyZ2V0O1xuICAgICAgbGVuID0gcGF0aC5sZW5ndGg7XG4gICAgICBjdXJzb3IgPSAtMTtcbiAgICAgIGlmIChsZW4pIHtcbiAgICAgICAgd2hpbGUgKCsrY3Vyc29yIDwgbGVuICYmIGl0KSB7XG4gICAgICAgICAgc3RlcCA9IHBhdGhbY3Vyc29yXTtcbiAgICAgICAgICBpZiAoQXJyYXkuaXNBcnJheShpdCkpIHtcbiAgICAgICAgICAgIGlmIChpc05hTihzdGVwKSB8fCAhaXNGaW5pdGUoc3RlcCkpIHtcbiAgICAgICAgICAgICAgcmV0dXJuIG5vbmV4aXN0ZW50O1xuICAgICAgICAgICAgfVxuICAgICAgICAgICAgcCA9IHRvQXJyYXlJbmRleFJlZmVyZW5jZShpdCwgc3RlcCk7XG4gICAgICAgICAgICBpZiAoaXQubGVuZ3RoID4gcCkge1xuICAgICAgICAgICAgICBpdCA9IGl0W3BdO1xuICAgICAgICAgICAgfSBlbHNlIHtcbiAgICAgICAgICAgICAgcmV0dXJuIG5vbmV4aXN0ZW50O1xuICAgICAgICAgICAgfVxuICAgICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICBpdCA9IGl0W3N0ZXBdO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuICAgICAgcmV0dXJuIGl0O1xuICAgIH1cbiAgICByZXR1cm4gbm9uZXhpc3RlbnQ7XG4gIH1cblxuICBmdW5jdGlvbiBjb21waWxlUG9pbnRlckRlcmVmZXJlbmNlKHBhdGgpIHtcbiAgICBsZXQgYm9keSA9IGBpZiAodHlwZW9mKG9iaikgIT09ICd1bmRlZmluZWQnYDtcbiAgICBpZiAocGF0aC5sZW5ndGggPT09IDApIHtcbiAgICAgIHJldHVybiBmdW5jdGlvbihyb290KSB7XG4gICAgICAgIHJldHVybiByb290O1xuICAgICAgfTtcbiAgICB9XG4gICAgYm9keSA9IHBhdGgucmVkdWNlKChib2R5LCBwLCBpKSA9PiB7XG4gICAgICByZXR1cm4gYCR7Ym9keX0gJiZcbiAgICB0eXBlb2YoKG9iaiA9IG9ialsnJHtyZXBsYWNlKHBhdGhbaV0sICdcXFxcJywgJ1xcXFxcXFxcJyl9J10pKSAhPT0gJ3VuZGVmaW5lZCdgO1xuICAgIH0sIGBpZiAodHlwZW9mKG9iaikgIT09ICd1bmRlZmluZWQnYCk7XG4gICAgYm9keSA9IGAke2JvZHl9KSB7XG4gIHJldHVybiBvYmo7XG59YDtcbiAgICByZXR1cm4gbmV3IEZ1bmN0aW9uKFsnb2JqJ10sIGJvZHkpOyAvLyBlc2xpbnQtZGlzYWJsZS1saW5lIG5vLW5ldy1mdW5jXG4gIH1cblxuICBmdW5jdGlvbiBzZXRWYWx1ZUF0UGF0aCh0YXJnZXQsIHZhbCwgcGF0aCwgZm9yY2UpIHtcbiAgICB2YXIgaXQ7XG4gICAgdmFyIGxlbjtcbiAgICB2YXIgZW5kO1xuICAgIHZhciBjdXJzb3I7XG4gICAgdmFyIHN0ZXA7XG4gICAgdmFyIHA7XG4gICAgdmFyIHJlbTtcbiAgICB2YXIgbm9uZXhpc3RlbnQgPSB1bmRlZmluZWQ7XG4gICAgaWYgKHBhdGgubGVuZ3RoID09PSAwKSB7XG4gICAgICB0aHJvdyBuZXcgRXJyb3IoJ0Nhbm5vdCBzZXQgdGhlIHJvb3Qgb2JqZWN0OyBhc3NpZ24gaXQgZGlyZWN0bHkuJyk7XG4gICAgfVxuICAgIGlmICh0eXBlb2YgdGFyZ2V0ID09PSAndW5kZWZpbmVkJykge1xuICAgICAgdGhyb3cgVHlwZUVycm9yKCdDYW5ub3Qgc2V0IHZhbHVlcyBvbiB1bmRlZmluZWQnKTtcbiAgICB9XG4gICAgaXQgPSB0YXJnZXQ7XG4gICAgbGVuID0gcGF0aC5sZW5ndGg7XG4gICAgZW5kID0gcGF0aC5sZW5ndGggLSAxO1xuICAgIGN1cnNvciA9IC0xO1xuICAgIGlmIChsZW4pIHtcbiAgICAgIHdoaWxlICgrK2N1cnNvciA8IGxlbikge1xuICAgICAgICBzdGVwID0gcGF0aFtjdXJzb3JdO1xuICAgICAgICBpZiAoQXJyYXkuaXNBcnJheShpdCkpIHtcbiAgICAgICAgICBwID0gdG9BcnJheUluZGV4UmVmZXJlbmNlKGl0LCBzdGVwKTtcbiAgICAgICAgICBpZiAoaXQubGVuZ3RoID4gcCkge1xuICAgICAgICAgICAgaWYgKGN1cnNvciA9PT0gZW5kKSB7XG4gICAgICAgICAgICAgIHJlbSA9IGl0W3BdO1xuICAgICAgICAgICAgICBpdFtwXSA9IHZhbDtcbiAgICAgICAgICAgICAgcmV0dXJuIHJlbTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIGl0ID0gaXRbcF07XG4gICAgICAgICAgfSBlbHNlIGlmIChpdC5sZW5ndGggPT09IHApIHtcbiAgICAgICAgICAgIGl0LnB1c2godmFsKTtcbiAgICAgICAgICAgIHJldHVybiBub25leGlzdGVudDtcbiAgICAgICAgICB9XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgaWYgKHR5cGVvZiBpdFtzdGVwXSA9PT0gJ3VuZGVmaW5lZCcpIHtcbiAgICAgICAgICAgIGlmIChmb3JjZSkge1xuICAgICAgICAgICAgICBpZiAoY3Vyc29yID09PSBlbmQpIHtcbiAgICAgICAgICAgICAgICBpdFtzdGVwXSA9IHZhbDtcbiAgICAgICAgICAgICAgICByZXR1cm4gbm9uZXhpc3RlbnQ7XG4gICAgICAgICAgICAgIH1cbiAgICAgICAgICAgICAgaXQgPSBpdFtzdGVwXSA9IHt9O1xuICAgICAgICAgICAgICBjb250aW51ZTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIHJldHVybiBub25leGlzdGVudDtcbiAgICAgICAgICB9XG4gICAgICAgICAgaWYgKGN1cnNvciA9PT0gZW5kKSB7XG4gICAgICAgICAgICByZW0gPSBpdFtzdGVwXTtcbiAgICAgICAgICAgIGl0W3N0ZXBdID0gdmFsO1xuICAgICAgICAgICAgcmV0dXJuIHJlbTtcbiAgICAgICAgICB9XG4gICAgICAgICAgaXQgPSBpdFtzdGVwXTtcbiAgICAgICAgfVxuICAgICAgfVxuICAgIH1cbiAgICByZXR1cm4gaXQ7XG4gIH1cblxuICBmdW5jdGlvbiBsb29rc0xpa2VGcmFnbWVudChwdHIpIHtcbiAgICByZXR1cm4gcHRyICYmIHB0ci5sZW5ndGggJiYgcHRyWzBdID09PSAnIyc7XG4gIH1cblxuICBmdW5jdGlvbiBwaWNrRGVjb2RlcihwdHIpIHtcbiAgICByZXR1cm4gKGxvb2tzTGlrZUZyYWdtZW50KHB0cikpID8gZGVjb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyIDogZGVjb2RlUG9pbnRlcjtcbiAgfVxuXG4gIGxldCAkcGF0aCA9IFN5bWJvbCgpO1xuICBsZXQgJG9yaWcgPSBTeW1ib2woKTtcbiAgbGV0ICRwb2ludGVyID0gU3ltYm9sKCk7XG4gIGxldCAkZnJhZ21lbnRJZCA9IFN5bWJvbCgpO1xuXG4gIGNsYXNzIEpzb25Qb2ludGVyIHtcblxuICAgIGNvbnN0cnVjdG9yKHB0cikge1xuICAgICAgdGhpc1skb3JpZ10gPSBwdHI7XG4gICAgICB0aGlzWyRwYXRoXSA9IChBcnJheS5pc0FycmF5KHB0cikpID8gcHRyIDogcGlja0RlY29kZXIocHRyKShwdHIpO1xuICAgICAgT2JqZWN0LmRlZmluZVByb3BlcnR5KHRoaXMsICdnZXQnLCB7XG4gICAgICAgIGVudW1lcmFibGU6IHRydWUsXG4gICAgICAgIHZhbHVlOiBjb21waWxlUG9pbnRlckRlcmVmZXJlbmNlKHRoaXMucGF0aClcbiAgICAgIH0pO1xuICAgIH1cblxuICAgIGdldCBwYXRoKCkge1xuICAgICAgcmV0dXJuIHRoaXNbJHBhdGhdO1xuICAgIH1cblxuICAgIGdldCBwb2ludGVyKCkge1xuICAgICAgaWYgKCF0aGlzWyRwb2ludGVyXSkge1xuICAgICAgICB0aGlzWyRwb2ludGVyXSA9IGVuY29kZVBvaW50ZXIodGhpcy5wYXRoKTtcbiAgICAgIH1cbiAgICAgIHJldHVybiB0aGlzWyRwb2ludGVyXTtcbiAgICB9XG5cbiAgICBnZXQgdXJpRnJhZ21lbnRJZGVudGlmaWVyKCkge1xuICAgICAgaWYgKCF0aGlzWyRmcmFnbWVudElkXSkge1xuICAgICAgICB0aGlzWyRmcmFnbWVudElkXSA9IGVuY29kZVVyaUZyYWdtZW50SWRlbnRpZmllcih0aGlzLnBhdGgpO1xuICAgICAgfVxuICAgICAgcmV0dXJuIHRoaXNbJGZyYWdtZW50SWRdO1xuICAgIH1cblxuICAgIGhhcyh0YXJnZXQpIHtcbiAgICAgIHJldHVybiB0eXBlb2YodGhpcy5nZXQodGFyZ2V0KSkgIT0gJ3VuZGVmaW5lZCc7XG4gICAgfVxuXG4gIH1cblxuICBjbGFzcyBKc29uUmVmZXJlbmNlIHtcblxuICAgIGNvbnN0cnVjdG9yKHBvaW50ZXIpIHtcbiAgICAgIHRoaXNbJHBvaW50ZXJdID0gcG9pbnRlcjtcbiAgICB9XG5cbiAgICBnZXQgJHJlZigpIHtcbiAgICAgIHJldHVybiB0aGlzWyRwb2ludGVyXS51cmlGcmFnbWVudElkZW50aWZpZXI7XG4gICAgfVxuXG4gICAgcmVzb2x2ZSh0YXJnZXQpIHtcbiAgICAgIHJldHVybiB0aGlzWyRwb2ludGVyXS5nZXQodGFyZ2V0KTtcbiAgICB9XG5cbiAgICB0b1N0cmluZygpIHtcbiAgICAgIHJldHVybiB0aGlzLiRyZWY7XG4gICAgfVxuXG4gIH1cblxuICBKc29uUmVmZXJlbmNlLmlzUmVmZXJlbmNlID0gZnVuY3Rpb24ob2JqKSB7XG4gICAgcmV0dXJuIG9iaiAmJiBvYmogaW5zdGFuY2VvZiBKc29uUmVmZXJlbmNlIHx8XG4gICAgICAodHlwZW9mIG9iai4kcmVmID09PSAnc3RyaW5nJyAmJlxuICAgICAgICB0eXBlb2Ygb2JqLnJlc29sdmUgPT09ICdmdW5jdGlvbicpO1xuICB9O1xuXG4gIGZ1bmN0aW9uIHZpc2l0KHRhcmdldCwgdmlzaXRvciwgY3ljbGUpIHtcbiAgICB2YXIgaXRlbXMsIGksIGlsZW4sIGosIGpsZW4sIGl0LCBwYXRoLCBjdXJzb3IsIHR5cGVUO1xuICAgIHZhciBkaXN0aW5jdE9iamVjdHM7XG4gICAgdmFyIHEgPSBuZXcgQXJyYXkoKTtcbiAgICB2YXIgcWN1cnNvciA9IDA7XG4gICAgcS5wdXNoKHtcbiAgICAgIG9iajogdGFyZ2V0LFxuICAgICAgcGF0aDogW11cbiAgICB9KTtcbiAgICBpZiAoY3ljbGUpIHtcbiAgICAgIGRpc3RpbmN0T2JqZWN0cyA9IG5ldyBNYXAoKTtcbiAgICB9XG4gICAgdmlzaXRvcihlbmNvZGVQb2ludGVyKFtdKSwgdGFyZ2V0KTtcbiAgICB3aGlsZSAocWN1cnNvciA8IHEubGVuZ3RoKSB7XG4gICAgICBjdXJzb3IgPSBxW3FjdXJzb3IrK107XG4gICAgICB0eXBlVCA9IHR5cGVvZiBjdXJzb3Iub2JqO1xuICAgICAgaWYgKHR5cGVUID09PSAnb2JqZWN0JyAmJiBjdXJzb3Iub2JqICE9PSBudWxsKSB7XG4gICAgICAgIGlmIChBcnJheS5pc0FycmF5KGN1cnNvci5vYmopKSB7XG4gICAgICAgICAgaiA9IC0xO1xuICAgICAgICAgIGpsZW4gPSBjdXJzb3Iub2JqLmxlbmd0aDtcbiAgICAgICAgICB3aGlsZSAoKytqIDwgamxlbikge1xuICAgICAgICAgICAgaXQgPSBjdXJzb3Iub2JqW2pdO1xuICAgICAgICAgICAgcGF0aCA9IGN1cnNvci5wYXRoLmNvbmNhdChqKTtcbiAgICAgICAgICAgIGlmICh0eXBlb2YgaXQgPT09ICdvYmplY3QnICYmIGl0ICE9PSBudWxsKSB7XG4gICAgICAgICAgICAgIGlmIChjeWNsZSAmJiBkaXN0aW5jdE9iamVjdHMuaGFzKGl0KSkge1xuICAgICAgICAgICAgICAgIHZpc2l0b3IoZW5jb2RlUG9pbnRlcihwYXRoKSwgbmV3IEpzb25SZWZlcmVuY2UoZGlzdGluY3RPYmplY3RzLmdldChpdCkpKTtcbiAgICAgICAgICAgICAgICBjb250aW51ZTtcbiAgICAgICAgICAgICAgfVxuICAgICAgICAgICAgICBxLnB1c2goe1xuICAgICAgICAgICAgICAgIG9iajogaXQsXG4gICAgICAgICAgICAgICAgcGF0aDogcGF0aFxuICAgICAgICAgICAgICB9KTtcbiAgICAgICAgICAgICAgaWYgKGN5Y2xlKSB7XG4gICAgICAgICAgICAgICAgZGlzdGluY3RPYmplY3RzLnNldChpdCwgbmV3IEpzb25Qb2ludGVyKGVuY29kZVVyaUZyYWdtZW50SWRlbnRpZmllcihwYXRoKSkpO1xuICAgICAgICAgICAgICB9XG4gICAgICAgICAgICB9XG4gICAgICAgICAgICB2aXNpdG9yKGVuY29kZVBvaW50ZXIocGF0aCksIGl0KTtcbiAgICAgICAgICB9XG4gICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgaXRlbXMgPSBPYmplY3Qua2V5cyhjdXJzb3Iub2JqKTtcbiAgICAgICAgICBpbGVuID0gaXRlbXMubGVuZ3RoO1xuICAgICAgICAgIGkgPSAtMTtcbiAgICAgICAgICB3aGlsZSAoKytpIDwgaWxlbikge1xuICAgICAgICAgICAgaXQgPSBjdXJzb3Iub2JqW2l0ZW1zW2ldXTtcbiAgICAgICAgICAgIHBhdGggPSBjdXJzb3IucGF0aC5jb25jYXQoaXRlbXNbaV0pO1xuICAgICAgICAgICAgaWYgKHR5cGVvZiBpdCA9PT0gJ29iamVjdCcgJiYgaXQgIT09IG51bGwpIHtcbiAgICAgICAgICAgICAgaWYgKGN5Y2xlICYmIGRpc3RpbmN0T2JqZWN0cy5oYXMoaXQpKSB7XG4gICAgICAgICAgICAgICAgdmlzaXRvcihlbmNvZGVQb2ludGVyKHBhdGgpLCBuZXcgSnNvblJlZmVyZW5jZShkaXN0aW5jdE9iamVjdHMuZ2V0KGl0KSkpO1xuICAgICAgICAgICAgICAgIGNvbnRpbnVlO1xuICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgIHEucHVzaCh7XG4gICAgICAgICAgICAgICAgb2JqOiBpdCxcbiAgICAgICAgICAgICAgICBwYXRoOiBwYXRoXG4gICAgICAgICAgICAgIH0pO1xuICAgICAgICAgICAgICBpZiAoY3ljbGUpIHtcbiAgICAgICAgICAgICAgICBkaXN0aW5jdE9iamVjdHMuc2V0KGl0LCBuZXcgSnNvblBvaW50ZXIoZW5jb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyKHBhdGgpKSk7XG4gICAgICAgICAgICAgIH1cbiAgICAgICAgICAgIH1cbiAgICAgICAgICAgIHZpc2l0b3IoZW5jb2RlUG9pbnRlcihwYXRoKSwgaXQpO1xuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuICAgIH1cbiAgfVxuXG4gIEpzb25Qb2ludGVyLnByb3RvdHlwZS5zZXQgPSBmdW5jdGlvbih0YXJnZXQsIHZhbHVlLCBmb3JjZSkge1xuICAgIHJldHVybiBzZXRWYWx1ZUF0UGF0aCh0YXJnZXQsIHZhbHVlLCB0aGlzLnBhdGgsIGZvcmNlKTtcbiAgfTtcblxuICBKc29uUG9pbnRlci5wcm90b3R5cGUudG9TdHJpbmcgPSBmdW5jdGlvbigpIHtcbiAgICByZXR1cm4gdGhpcy5vcmlnaW5hbDtcbiAgfTtcblxuICBKc29uUG9pbnRlci5jcmVhdGUgPSBmdW5jdGlvbihwdHIpIHtcbiAgICByZXR1cm4gbmV3IEpzb25Qb2ludGVyKHB0cik7XG4gIH07XG5cbiAgSnNvblBvaW50ZXIuaGFzID0gZnVuY3Rpb24odGFyZ2V0LCBwdHIpIHtcbiAgICByZXR1cm4gaGFzVmFsdWVBdFBhdGgodGFyZ2V0LCBwaWNrRGVjb2RlcihwdHIpKHB0cikpO1xuICB9O1xuXG4gIEpzb25Qb2ludGVyLmdldCA9IGZ1bmN0aW9uKHRhcmdldCwgcHRyKSB7XG4gICAgcmV0dXJuIGdldFZhbHVlQXRQYXRoKHRhcmdldCwgcGlja0RlY29kZXIocHRyKShwdHIpKTtcbiAgfTtcblxuICBKc29uUG9pbnRlci5zZXQgPSBmdW5jdGlvbih0YXJnZXQsIHB0ciwgdmFsLCBmb3JjZSkge1xuICAgIHJldHVybiBzZXRWYWx1ZUF0UGF0aCh0YXJnZXQsIHZhbCwgcGlja0RlY29kZXIocHRyKShwdHIpLCBmb3JjZSk7XG4gIH07XG5cbiAgSnNvblBvaW50ZXIubGlzdCA9IGZ1bmN0aW9uKHRhcmdldCwgZnJhZ21lbnRJZCkge1xuICAgIHZhciByZXMgPSBbXTtcbiAgICB2YXIgdmlzaXRvciA9IChmcmFnbWVudElkKSA/XG4gICAgICBmdW5jdGlvbihwdHIsIHZhbCkge1xuICAgICAgICByZXMucHVzaCh7XG4gICAgICAgICAgZnJhZ21lbnRJZDogZW5jb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyKGRlY29kZVBvaW50ZXIocHRyKSksXG4gICAgICAgICAgdmFsdWU6IHZhbFxuICAgICAgICB9KTtcbiAgICAgIH0gOlxuICAgICAgZnVuY3Rpb24ocHRyLCB2YWwpIHtcbiAgICAgICAgcmVzLnB1c2goe1xuICAgICAgICAgIHBvaW50ZXI6IHB0cixcbiAgICAgICAgICB2YWx1ZTogdmFsXG4gICAgICAgIH0pO1xuICAgICAgfTtcbiAgICB2aXNpdCh0YXJnZXQsIHZpc2l0b3IpO1xuICAgIHJldHVybiByZXM7XG4gIH07XG5cbiAgSnNvblBvaW50ZXIuZmxhdHRlbiA9IGZ1bmN0aW9uKHRhcmdldCwgZnJhZ21lbnRJZCkge1xuICAgIHZhciByZXMgPSB7fTtcbiAgICB2YXIgdmlzaXRvciA9IChmcmFnbWVudElkKSA/XG4gICAgICBmdW5jdGlvbihwdHIsIHZhbCkge1xuICAgICAgICByZXNbZW5jb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyKGRlY29kZVBvaW50ZXIocHRyKSldID0gdmFsO1xuICAgICAgfSA6XG4gICAgICBmdW5jdGlvbihwdHIsIHZhbCkge1xuICAgICAgICByZXNbcHRyXSA9IHZhbDtcbiAgICAgIH07XG4gICAgdmlzaXQodGFyZ2V0LCB2aXNpdG9yKTtcbiAgICByZXR1cm4gcmVzO1xuICB9O1xuXG4gIEpzb25Qb2ludGVyLm1hcCA9IGZ1bmN0aW9uKHRhcmdldCwgZnJhZ21lbnRJZCkge1xuICAgIHZhciByZXMgPSBuZXcgTWFwKCk7XG4gICAgdmFyIHZpc2l0b3IgPSAoZnJhZ21lbnRJZCkgP1xuICAgICAgZnVuY3Rpb24ocHRyLCB2YWwpIHtcbiAgICAgICAgcmVzLnNldChlbmNvZGVVcmlGcmFnbWVudElkZW50aWZpZXIoZGVjb2RlUG9pbnRlcihwdHIpKSwgdmFsKTtcbiAgICAgIH0gOiByZXMuc2V0LmJpbmQocmVzKTtcbiAgICB2aXNpdCh0YXJnZXQsIHZpc2l0b3IpO1xuICAgIHJldHVybiByZXM7XG4gIH07XG5cbiAgSnNvblBvaW50ZXIudmlzaXQgPSB2aXNpdDtcblxuICBKc29uUG9pbnRlci5kZWNvZGUgPSBmdW5jdGlvbihwdHIpIHtcbiAgICByZXR1cm4gcGlja0RlY29kZXIocHRyKShwdHIpO1xuICB9O1xuXG4gIEpzb25Qb2ludGVyLmRlY29kZVBvaW50ZXIgPSBkZWNvZGVQb2ludGVyO1xuICBKc29uUG9pbnRlci5lbmNvZGVQb2ludGVyID0gZW5jb2RlUG9pbnRlcjtcbiAgSnNvblBvaW50ZXIuZGVjb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyID0gZGVjb2RlVXJpRnJhZ21lbnRJZGVudGlmaWVyO1xuICBKc29uUG9pbnRlci5lbmNvZGVVcmlGcmFnbWVudElkZW50aWZpZXIgPSBlbmNvZGVVcmlGcmFnbWVudElkZW50aWZpZXI7XG5cbiAgSnNvblBvaW50ZXIuSnNvblJlZmVyZW5jZSA9IEpzb25SZWZlcmVuY2U7XG4gIEpzb25Qb2ludGVyLmlzUmVmZXJlbmNlID0gSnNvblJlZmVyZW5jZS5pc1JlZmVyZW5jZTtcblxuICBKc29uUG9pbnRlci5ub0NvbmZsaWN0ID0gZnVuY3Rpb24oKSB7XG4gICAgcm9vdC5Kc29uUG9pbnRlciA9IHNhdmVkSnNvblBvaW50ZXI7XG4gICAgcmV0dXJuIEpzb25Qb2ludGVyO1xuICB9O1xuXG4gIGlmICh0eXBlb2YgZXhwb3J0cyAhPT0gJ3VuZGVmaW5lZCcpIHtcbiAgICBpZiAodHlwZW9mIG1vZHVsZSAhPT0gJ3VuZGVmaW5lZCcgJiYgbW9kdWxlLmV4cG9ydHMpIHtcbiAgICAgIGV4cG9ydHMgPSBtb2R1bGUuZXhwb3J0cyA9IEpzb25Qb2ludGVyO1xuICAgIH1cbiAgICBleHBvcnRzLkpzb25Qb2ludGVyID0gSnNvblBvaW50ZXI7XG4gIH0gZWxzZSB7XG4gICAgcm9vdC5Kc29uUG9pbnRlciA9IEpzb25Qb2ludGVyO1xuICB9XG59KS5jYWxsKHRoaXMpOyAvLyBlc2xpbnQtZGlzYWJsZS1saW5lIG5vLWludmFsaWQtdGhpc1xuIl19
+</script>
+</body>
+</html>
